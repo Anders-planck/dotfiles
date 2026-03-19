@@ -1,0 +1,9 @@
+#! /usr/bin/env sh
+
+ln -sFi $(pwd)/.zsh* $(pwd)/.p10k*.zsh $HOME
+mkdir -p $HOME/bin
+ln -sFi $(pwd)/update $HOME/bin/update_zsh
+
+./update
+
+echo "Fetch new updated with 'update_zsh'"

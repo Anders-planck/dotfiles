@@ -1,0 +1,7 @@
+#! /usr/bin/env sh
+
+cd "$HOME/dotzsh"
+git fetch --all --prune && git pull --rebase
+cd "$OLDPWD"
+
+echo "Start a new terminal session and profit!"
