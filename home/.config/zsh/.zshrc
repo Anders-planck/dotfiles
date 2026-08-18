@@ -177,7 +177,11 @@ fpath=(~/.docker/completions $fpath)
 # This won't be added again if you remove it.
 source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 
-[[ -x $HOME/.local/bin/mise ]] && eval "$($HOME/.local/bin/mise activate zsh)"
+# mise, resolved from PATH rather than a hardcoded ~/.local/bin. It is installed
+# via Homebrew so `brew upgrade` keeps it current: `mise self-update` calls the
+# GitHub releases API directly and fails with 403 when unauthenticated — unlike
+# tool resolution, it does not pick up a token from `gh`.
+(( $+commands[mise] )) && eval "$(mise activate zsh)"
 
 # bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

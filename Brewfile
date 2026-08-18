@@ -92,6 +92,8 @@ brew "llvm"
 brew "makensis"
 # Modern and intuitive terminal-based text editor
 brew "micro"
+# Polyglot runtime manager (asdf rust clone)
+brew "mise"
 # MongoDB Shell to connect, configure, query, and work with your MongoDB database
 brew "mongosh"
 # NCurses Disk Usage
@@ -160,10 +162,9 @@ cask "bruno"
 cask "copyclip"
 # Launch builds and start simulators from your menu bar
 cask "expo-orbit"
-# Other Nerd Font casks installed on this machine are deliberately not
-# declared: only the fonts the configs reference are kept. The old
-# fonts/main.sh installed all 67 from the catalogue. `brew bundle cleanup`
-# lists what is installed but undeclared.
+# Other Nerd Font casks installed here are deliberately not declared: only
+# the fonts the configs reference are kept. `brew bundle cleanup` lists
+# what is installed but undeclared.
 cask "iterm2"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-plemol-jp"
