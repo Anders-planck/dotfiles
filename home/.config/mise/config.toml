@@ -25,12 +25,15 @@ ruby = "3.2.2"
 go = "1.26"
 bun = "1"
 java = "temurin-21"
-ghq = "latest"   # pinned: "latest" re-queries the GitHub API each startup
+ghq = "1.10.1"   # pinned: "latest" re-queries the GitHub API each startup
 
 [settings]
 # Read .nvmrc / .node-version / package.json devEngines, like nvm did.
 # mise disables idiomatic version files by default; this restores that behaviour.
 idiomatic_version_file_enable_tools = ["node"]
+
+[settings.github]
+credential_command = "gh auth token"
 
 # Several mise operations (version lists, python attestation checks, self-update)
 # call the GitHub API and fail with 403 when unauthenticated. Raise the limit by
