@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# Install the language-level global packages the Brewfile cannot express.
+#
+#   bin/globals           install npm, bun and rust globals
+#   bin/globals --check    report what is missing, install nothing
+#   bin/globals --dump     rewrite the package lists from what is installed here
+#
+# `brew bundle` covers formulae, casks, VS Code extensions, cargo and uv — but
+# not npm or bun global packages, and not rustup toolchains or targets. Without
+# this, a fresh machine gets a working shell and no `repomix`, `pnpm`, `vercel`,
+# and a Rust install that cannot cross-compile.
+#
+# Lists live in packages/. Refresh them with --dump after adding something.
+set -euo pipefail
+
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+pkg="$repo/packages"
+
+mode=install
+case "${1:-}" in
+	--check) mode=check ;;
+	--dump) mode=dump ;;
+	-h | --help)
+		sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
+	'') ;;
+	*)
+		printf 'unknown option: %s\n' "$1" >&2
+		exit 2
+		;;
+esac
+
+# Strip comments and blanks.
+list() { grep -vE '^\s*(#|$)' "$pkg/$1" 2>/dev/null || true; }
+
+if [ "$mode" = dump ]; then
+	mkdir -p "$pkg"
+	if command -v npm >/dev/null 2>&1; then
+		npm ls -g --depth=0 --json 2>/dev/null | python3 -c '
+import json, sys
+d = json.load(sys.stdin).get("dependencies", {})
+for name, info in sorted(d.items()):
+    if name in {"npm", "corepack"}:
+        continue
+    if str(info.get("resolved", "")).startswith("file:"):
+        print("# %s  (local link, not installable from a registry)" % name)
+        continue
+    print(name)
+' >"$pkg/npm-global.txt"
+		printf 'npm  -> %s\n' "$pkg/npm-global.txt"
+	fi
+	if [ -f "$HOME/.bun/install/global/package.json" ]; then
+		python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+print("\n".join(sorted(d.get("dependencies", {}))))
+' "$HOME/.bun/install/global/package.json" >"$pkg/bun-global.txt"
+		printf 'bun  -> %s\n' "$pkg/bun-global.txt"
+	fi
+	if command -v rustup >/dev/null 2>&1; then
+		rustup target list --installed >"$pkg/rust-targets.txt"
+		printf 'rust -> %s (%s targets)\n' "$pkg/rust-targets.txt" "$(wc -l <"$pkg/rust-targets.txt" | tr -d ' ')"
+	fi
+	exit 0
+fi
+
+# bash 3.2 has no mapfile/readarray, so split on newlines by hand.
+to_array() { # usage: to_array <<EOF ... EOF ; result in $SPLIT
+	SPLIT=()
+	while IFS= read -r _l; do
+		[ -n "$_l" ] && SPLIT+=("$_l")
+	done
+}
+
+rc=0
+
+report() { # name, "missing" list
+	if [ -z "$2" ]; then
+		printf '  ok       %-6s all present\n' "$1"
+	else
+		printf '  MISSING  %-6s %s\n' "$1" "$(echo "$2" | tr '\n' ' ')"
+		rc=1
+	fi
+}
+
+# ---- npm --------------------------------------------------------------------
+npm_missing=""
+if command -v npm >/dev/null 2>&1; then
+	installed=$(npm ls -g --depth=0 --parseable 2>/dev/null | sed 's|.*/node_modules/||' | sort -u)
+	while IFS= read -r p; do
+		[ -n "$p" ] || continue
+		printf '%s\n' "$installed" | grep -qxF "$p" || npm_missing="$npm_missing$p"$'\n'
+	done <<EOF
+$(list npm-global.txt)
+EOF
+	npm_missing=$(printf '%s' "$npm_missing")
+	if [ "$mode" = install ] && [ -n "$npm_missing" ]; then
+		printf 'installing npm globals...\n'
+		to_array <<EOF
+$npm_missing
+EOF
+		npm i -g "${SPLIT[@]}"
+		npm_missing=""
+	fi
+	report npm "$npm_missing"
+else
+	printf '  SKIP     npm    not on PATH (mise install node first)\n'
+	rc=1
+fi
+
+# ---- bun --------------------------------------------------------------------
+bun_missing=""
+if command -v bun >/dev/null 2>&1; then
+	while IFS= read -r p; do
+		[ -n "$p" ] || continue
+		[ -d "$HOME/.bun/install/global/node_modules/$p" ] || bun_missing="$bun_missing$p"$'\n'
+	done <<EOF
+$(list bun-global.txt)
+EOF
+	bun_missing=$(printf '%s' "$bun_missing")
+	if [ "$mode" = install ] && [ -n "$bun_missing" ]; then
+		printf 'installing bun globals...\n'
+		to_array <<EOF
+$bun_missing
+EOF
+		bun add -g "${SPLIT[@]}"
+		bun_missing=""
+	fi
+	report bun "$bun_missing"
+else
+	printf '  SKIP     bun    not on PATH (mise install bun first)\n'
+	rc=1
+fi
+
+# ---- rust -------------------------------------------------------------------
+# rustup, not mise: this machine cross-compiles to Android, iOS and Windows, and
+# mise's rust plugin does not manage targets or components.
+rust_missing=""
+if command -v rustup >/dev/null 2>&1; then
+	have=$(rustup target list --installed 2>/dev/null)
+	while IFS= read -r t; do
+		[ -n "$t" ] || continue
+		printf '%s\n' "$have" | grep -qxF "$t" || rust_missing="$rust_missing$t"$'\n'
+	done <<EOF
+$(list rust-targets.txt)
+EOF
+	rust_missing=$(printf '%s' "$rust_missing")
+	if [ "$mode" = install ] && [ -n "$rust_missing" ]; then
+		printf 'adding rust targets...\n'
+		to_array <<EOF
+$rust_missing
+EOF
+		rustup target add "${SPLIT[@]}"
+		rust_missing=""
+	fi
+	report rust "$rust_missing"
+else
+	printf '  SKIP     rust   rustup not on PATH (brew install rustup, then rustup default stable)\n'
+	rc=1
+fi
+
+exit $rc

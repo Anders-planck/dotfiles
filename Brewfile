@@ -162,6 +162,14 @@ cask "bruno"
 cask "copyclip"
 # Launch builds and start simulators from your menu bar
 cask "expo-orbit"
+# VS Code itself: installed by hand on this machine, so `brew bundle dump` never
+# captured it — yet 145 `vscode` entries below depend on it existing.
+# rustup owns the Rust toolchain (mise deliberately does not — see
+# home/.config/mise/config.toml). The `cargo` entries below need it.
+brew "rustup"
+cask "visual-studio-code"
+# Ghostty: .config/ghostty/config is deployed but the app was never installed.
+cask "ghostty"
 cask "iterm2"
 cask "font-0xproto-nerd-font"
 cask "font-agave-nerd-font"

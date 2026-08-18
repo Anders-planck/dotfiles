@@ -1,0 +1,10 @@
+@nestjs/cli
+@nyariv/sandboxjs
+@playwright/cli
+@probelabs/probe
+@tobilu/qmd
+@upstash/cli
+dependency-cruiser
+promptfoo
+repomix
+# orditra  (local link, not installable from a registry)

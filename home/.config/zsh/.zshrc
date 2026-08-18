@@ -142,8 +142,20 @@ setopt no_auto_menu  # require an extra TAB press to open the completion menu
 # This block reproduces the exact precedence the old scattered exports produced.
 typeset -U path PATH
 
+# Android SDK / NDK. Installed by Android Studio, not by this repo — the paths
+# are guarded so a machine without them does not carry dead PATH entries.
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 export NDK_HOME="$ANDROID_HOME/ndk/29.0.13599879"
+_android_path=()
+if [[ -d $ANDROID_HOME ]]; then
+    _android_path=(
+        $NDK_HOME(N/)
+        $ANDROID_HOME/emulator(N/)
+        $ANDROID_HOME/tools(N/)
+        $ANDROID_HOME/tools/bin(N/)
+        $ANDROID_HOME/platform-tools(N/)
+    )
+fi
 
 path=(
     ~/.opencode/bin                                         # opencode
@@ -151,11 +163,7 @@ path=(
     ~/.bun/bin                                              # Bun
     # Python comes from mise, not the python.org framework installers. Those
     # two entries used to sit near the front of PATH and shadowed everything.
-    $NDK_HOME                                               # Android NDK
-    $ANDROID_HOME/emulator
-    $ANDROID_HOME/tools
-    $ANDROID_HOME/tools/bin
-    $ANDROID_HOME/platform-tools
+    $_android_path                                          # Android SDK/NDK, if present
     /opt/homebrew/opt/llvm/bin                              # LLVM (keg-only)
     ~/.codeium/windsurf/bin                                 # Windsurf
     ~/.console-ninja/.bin                                   # Console Ninja
@@ -163,6 +171,7 @@ path=(
     "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
     ~/.maestro/bin
 )
+unset _android_path
 
 # asdf v0.15+ is a standalone binary; no shell script to source
 

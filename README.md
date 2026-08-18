@@ -35,6 +35,7 @@ vscode/              → VS Code config, copied not linked (see below)
 | `install` | packages + symlinks + secrets + verification |
 | `link` / `dry` | symlinks only / show what would change |
 | `tools` | install missing CLI tools, then verify |
+| `globals` | npm/bun/rust globals `brew bundle` cannot express |
 | `fonts` | audit fonts: referenced, installed, unmanaged by brew |
 | `test` | start a real interactive shell in a pty, check the prompt renders |
 | `lint` | shellcheck the sh/bash scripts, `zsh -n` the zsh files |
@@ -55,15 +56,43 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-`install.sh` installs everything in the `Brewfile`, links `home/` into `$HOME`,
-seeds `~/.config/zsh/secrets.zsh` (0600), and verifies the tools resolve.
+On a **fresh machine** use `--full`:
 
 ```sh
+./install.sh --full
+```
+
+`--full` adds the steps that need the packages to exist first, and that are
+therefore easy to forget: `mise install` for the runtimes, `bin/globals` for the
+npm/bun/rust packages, `bin/vscode apply`, and `bin/iterm2 setup`. It finishes by
+checking that an interactive shell actually reaches a prompt.
+
+```sh
+./install.sh               # packages + symlinks + verification
 ./install.sh --dry-run     # show what would change, touch nothing
 ./install.sh --link-only   # skip brew bundle
-bin/bootstrap --check      # verify tools only
+bin/bootstrap --check      # verify CLI tools only
+bin/globals --check        # verify language globals only
 update_zsh                 # git pull this repo
 ```
+
+### What the Brewfile cannot express
+
+`brew bundle` covers formulae, casks, taps, VS Code extensions, `cargo` and `uv`
+entries — but not npm or bun global packages, and not rustup toolchains or
+targets. Those live in `packages/` and are installed by `bin/globals`:
+
+```
+packages/npm-global.txt     9 packages (pnpm arrives via corepack)
+packages/bun-global.txt     3 packages
+packages/rust-targets.txt   9 cross-compilation targets
+```
+
+Refresh them from the current machine with `bin/globals --dump`.
+
+Still not reproducible from this repo, by nature: Android Studio's SDK/NDK
+(the zsh PATH entries are guarded, so a machine without it carries no dead
+paths), the Flutter SDK, and the two commercial fonts — see Fonts below.
 
 It is safe to re-run. Anything real it would overwrite is moved to
 `~/.dotfiles-backup/<timestamp>/` first.

@@ -2,6 +2,9 @@
 # Install these dotfiles.
 #
 #   ./install.sh              packages + symlinks + verification
+#   ./install.sh --full       the above, plus runtimes, language globals,
+#                             VS Code settings and iTerm2 prefs — use this on a
+#                             fresh machine
 #   ./install.sh --link-only  skip `brew bundle`
 #   ./install.sh --dry-run    show what would change, touch nothing
 #
@@ -16,12 +19,14 @@ backup="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 
 link_only=0
 dry=0
+full=0
 for arg in "$@"; do
 	case "$arg" in
 		--link-only) link_only=1 ;;
 		--dry-run) dry=1 ;;
+		--full) full=1 ;;
 		-h | --help)
-			sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
+			sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
 			exit 0
 			;;
 		*)
@@ -163,12 +168,55 @@ if [ "$dry" -eq 0 ]; then
 	done
 fi
 
-# ---- 4. verify --------------------------------------------------------------
+# ---- 4. full setup ----------------------------------------------------------
+# Steps that need the packages from step 1 to already be installed, so they
+# cannot run earlier. Off by default because they are slow and mutate app state;
+# on a fresh machine you want them, hence --full.
+if [ "$dry" -eq 0 ] && [ "$full" -eq 1 ]; then
+	if command -v mise >/dev/null 2>&1; then
+		say "mise install (runtimes declared in ~/.config/mise/config.toml)"
+		mise install || warn "mise install failed"
+	else
+		warn "mise not on PATH — skipping runtimes"
+	fi
+
+	# Language-level globals: brew bundle covers formulae, casks, VS Code
+	# extensions, cargo and uv, but not npm/bun packages or rustup targets.
+	if [ -x "$repo/bin/globals" ]; then
+		say "language globals (npm, bun, rust targets)"
+		"$repo/bin/globals" || warn "some globals are missing — run bin/globals"
+	fi
+
+	if [ -x "$repo/bin/vscode" ] && [ -d "$HOME/Library/Application Support/Code/User" ]; then
+		say "VS Code settings"
+		"$repo/bin/vscode" apply || warn "bin/vscode apply failed"
+	fi
+
+	# iTerm2 rewrites its plist on exit, so it must not be running.
+	if [ -x "$repo/bin/iterm2" ] && [ -d /Applications/iTerm.app ]; then
+		if pgrep -xq iTerm2 2>/dev/null; then
+			warn "iTerm2 is running — quit it and run: bin/iterm2 setup"
+		else
+			say "iTerm2 preferences"
+			"$repo/bin/iterm2" setup || warn "bin/iterm2 setup failed"
+		fi
+	fi
+fi
+
+# ---- 5. verify --------------------------------------------------------------
 if [ "$dry" -eq 0 ] && [ -x "$repo/bin/bootstrap" ]; then
 	say "verifying tools"
 	"$repo/bin/bootstrap" --check || warn "some tools are missing — run bin/bootstrap"
 fi
 
+if [ "$dry" -eq 0 ] && [ -x "$repo/bin/test-shell" ]; then
+	say "checking the shell reaches a prompt"
+	"$repo/bin/test-shell" --timeout 60 || warn "the shell did not render a prompt — see bin/test-shell --verbose"
+fi
+
 say "done"
+if [ "$full" -eq 0 ] && [ "$dry" -eq 0 ]; then
+	say "on a fresh machine, finish with: ./install.sh --full"
+fi
 [ -d "$backup" ] && say "replaced files are in $backup"
 exit 0

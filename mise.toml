@@ -24,6 +24,14 @@ run = "./bin/bootstrap"
 description = "Audit fonts: referenced by configs, installed, unmanaged by brew"
 run = "./bin/fonts --check"
 
+[tasks.globals]
+description = "Install the npm/bun/rust globals brew bundle cannot express"
+run = "./bin/globals"
+
+[tasks."globals:dump"]
+description = "Refresh packages/*.txt from what is installed here"
+run = "./bin/globals --dump"
+
 [tasks.test]
 description = "Start a real interactive shell in a pty and check the prompt renders"
 run = "./bin/test-shell --cold --timeout 60"
@@ -109,6 +117,9 @@ echo "=== symlinks ==="
 echo
 echo "=== tools ==="
 ./bin/bootstrap --check 2>&1 | tail -12
+echo
+echo "=== language globals ==="
+./bin/globals --check || true
 echo
 echo "=== fonts ==="
 ./bin/fonts --used
