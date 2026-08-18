@@ -1,18 +1,28 @@
 # dotfiles
 
-Personal configuration files and scripts.
+Personal configuration files and scripts. macOS-first, zsh + zsh4humans.
 
 ## Structure
 
+Everything under `home/` is mirrored into `$HOME`. Everything else is repo tooling
+and is never installed.
+
 ```
-.config/        → App configs (nvim, fish, tmux, lazygit, ghostty, mise)
-.scripts/       → IDE launcher scripts
-vscode/         → VS Code settings and custom CSS
-zsh/            → Zsh config and plugins
-fonts/          → Nerd Font installer
-scripts/        → Backup/restore and utility scripts
-install.sh      → macOS/Linux setup script
-install.ps1     → Windows setup script
+home/                → mirrored into $HOME, file by file, as symlinks
+  .zshenv            → the only file that must sit at $HOME root; sets ZDOTDIR
+  .config/
+    zsh/             → .zshrc, .zshenv, .p10k.zsh, conf.d/NN_*.zsh
+    git/             → config, ignore   (XDG; NOT ~/.gitconfig)
+    nvim/ tmux/ ghostty/ lazygit/ mise/ powershell/ vscode/
+  .local/bin/        → user scripts on PATH
+  Library/…/Code/User/ → VS Code settings (macOS is not XDG)
+
+Brewfile             → packages, casks, fonts, VS Code extensions
+install.sh           → the only installer
+bin/                 → repo tooling: bootstrap, update, iterm2, backup/restore
+iterm2/              → iTerm2 preferences (read from here, see below)
+.github/workflows/   → gitleaks, shellcheck, sandboxed install test
+.chezmoiroot         → "home" — ready for chezmoi, not required
 ```
 
 ## Setup
@@ -20,66 +30,79 @@ install.ps1     → Windows setup script
 ```sh
 git clone https://github.com/Anders-planck/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-chmod +x install.sh
 ./install.sh
 ```
 
-### Zsh
-
-`zsh/` is a [zsh4humans](https://github.com/romkatv/zsh4humans) setup. The numbered
-files in `zsh/.zsh/` are sourced in order by `z4h source`.
+`install.sh` installs everything in the `Brewfile`, links `home/` into `$HOME`,
+seeds `~/.config/zsh/secrets.zsh` (0600), and verifies the tools resolve.
 
 ```sh
-zsh/install      # symlink .zshrc .zshenv .p10k.zsh .zsh/ into $HOME
-zsh/bootstrap    # install the CLI tools the config expects
-zsh/bootstrap --check    # verify only, install nothing
-update_zsh       # git pull this repo (installed by zsh/install)
+./install.sh --dry-run     # show what would change, touch nothing
+./install.sh --link-only   # skip brew bundle
+bin/bootstrap --check      # verify tools only
+update_zsh                 # git pull this repo
 ```
 
-`zsh/install` is safe to re-run. Anything real it would overwrite is moved to
-`~/.dotfiles-backup/<timestamp>/` first, and it resolves paths from its own
-location — so the repo can live anywhere. It also creates `~/.config/zsh` (0700)
-and seeds `secrets.zsh` (0600) from the template on first run.
+It is safe to re-run. Anything real it would overwrite is moved to
+`~/.dotfiles-backup/<timestamp>/` first.
 
-Every fragment in `.zsh/` is guarded by `type <tool>`, so a missing binary fails
-silently and the feature just disappears. `zsh/bootstrap` closes that gap: it
-installs what is missing via Homebrew, then verifies each command resolves and
-checks `secrets.zsh` permissions. Run it after `zsh/install` on a new machine.
+## Zsh
 
-### Secrets
-
-Tokens are **not** kept in `.zshrc` — that file is mode 0644 and readable by every
-process on the machine. They live in `~/.config/zsh/secrets.zsh` (mode 0600), which
-`.zshrc` sources last:
-
-```sh
-mkdir -p ~/.config/zsh && chmod 700 ~/.config/zsh
-cp .config/zsh/secrets.zsh.example ~/.config/zsh/secrets.zsh
-chmod 600 ~/.config/zsh/secrets.zsh
-```
+`~/.zshenv` sets `ZDOTDIR="$XDG_CONFIG_HOME/zsh"`, so the rest of the zsh config
+lives at `~/.config/zsh/` like every other app. The numbered files in `conf.d/`
+are sourced in order by `z4h source`.
 
 ### Startup-cost rules
 
-The shell startup budget is easy to wreck. Two rules that cost ~2 s when broken:
+Two rules that cost seconds per shell when broken:
 
 - **Never shadow a system binary with a shell function.** An `md5()` wrapper hides
   `/sbin/md5`; Powerlevel10k calls `md5 -- <file>` while building the prompt, and a
-  wrapper that does `cat $1` receives `--`, runs a bare `cat`, and **reads from the
-  terminal** — the shell hangs showing only `Last login: …` until you hit Ctrl+C.
-  It is intermittent: p10k only takes that path on a stat-cache miss. See the
-  warning comment in `zsh/.zsh/20_functions.zsh`.
-- **Cache anything that shells out at startup.** `thefuck --alias` costs ~900 ms and
-  `nvm use default` ~630 ms. Route slow init commands through `_evalcache`
-  (`zsh/.zsh/04_evalcache.zsh`); `.zshrc` resolves the nvm default with a pure-zsh
-  glob and loads `nvm` lazily on first call.
+  wrapper doing `cat $1` receives `--`, runs a bare `cat`, and **reads from the
+  terminal** — the shell hangs showing only `Last login: …` until Ctrl+C. Intermittent,
+  because p10k only takes that path on a stat-cache miss. See `conf.d/20_functions.zsh`.
+- **Cache anything that shells out at startup.** Route slow init commands through
+  `_evalcache` (`conf.d/04_evalcache.zsh`).
 
-Also: don't call `compinit` from `.zshrc` — z4h runs its own, deferred via `zle -F`
-after the prompt is up. Adding `fpath` entries is enough.
+Also: don't call `compinit` from `.zshrc` — z4h runs its own, deferred via `zle -F`.
+Adding an `fpath` entry is enough.
 
-### mise
+## Versions
 
-`.config/mise/config.toml` is a template meant for `~/.config/mise/`. Inside this
-checkout mise's `chpwd` hook will flag it as untrusted on every prompt. Silence it
-with `mise trust --ignore .config/mise/config.toml` — do **not** use plain
-`mise trust`, which would let it auto-install every tool pinned to `latest` whenever
-you `cd` here.
+`mise` manages language runtimes — it replaces nvm, asdf and fnm, which were all
+installed at once and fought over PATH. Versions are **pinned** in
+`home/.config/mise/config.toml`: `latest` re-resolves against the GitHub API on
+every shell start and fails with rate-limit warnings when unauthenticated.
+
+## Secrets
+
+Tokens are never in `.zshrc` — that file is 0644 and readable by every process.
+They live in `~/.config/zsh/secrets.zsh` (0600), sourced last:
+
+```sh
+cp home/.config/zsh/secrets.zsh.example ~/.config/zsh/secrets.zsh
+chmod 600 ~/.config/zsh/secrets.zsh
+```
+
+CI runs `gitleaks` over the full history on every push.
+
+## iTerm2
+
+iTerm2 does not read prefs from a fixed path in `$HOME`; it reads
+`com.googlecode.iterm2.plist` from a folder you nominate. So the plist lives at
+`iterm2/` rather than under `home/`, and a script sets the pointer:
+
+```sh
+bin/iterm2 setup     # point iTerm2 at this repo (quit iTerm2 first)
+bin/iterm2 export    # copy live prefs back into the repo, as diffable XML
+bin/iterm2 status    # show what iTerm2 is currently configured to do
+```
+
+## Fonts
+
+Nerd Fonts come from the `Brewfile`. `brew tap homebrew/cask-fonts` no longer
+works — the tap is in Homebrew's deprecated list and the command hard-errors; font
+casks now live in `homebrew/cask` with no tap needed.
+
+Only the fonts the configs actually reference are declared. `brew bundle cleanup`
+lists anything installed but undeclared.

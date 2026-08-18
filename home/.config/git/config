@@ -1,0 +1,114 @@
+[user]
+	name = Anders-planck
+	email = anders.jipwouo@gmail.com
+
+[github]
+	user = Anders-planck
+
+[core]
+	excludesfile = ~/.config/git/ignore
+	editor = nvim
+	ignorecase = false
+	# delta renders the diff; it is a pager, not a differ. See [delta] below.
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+	syntax-theme = Solarized (dark)
+
+[merge]
+	# zdiff3 shows the common ancestor in conflicts — strictly better than the
+	# default "merge" style, and cheap to adopt.
+	conflictstyle = zdiff3
+
+[diff]
+	algorithm = histogram
+	colorMoved = default
+	# difftastic is a *structural* differ, not a pager. It is wired to `git dft`
+	# below rather than being the default: its own README warns it scales poorly
+	# on files with many changes and can use a lot of memory.
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+[push]
+	default = simple
+	autoSetupRemote = true
+
+[rerere]
+	# Remember conflict resolutions and replay them automatically.
+	enabled = true
+	autoupdate = true
+
+[fetch]
+	prune = true
+
+[rebase]
+	autosquash = true
+	autostash = true
+
+[color]
+	status = auto
+	diff = auto
+	branch = auto
+	interactive = auto
+	grep = auto
+	ui = auto
+
+[alias]
+	d = diff
+	co = checkout
+	ci = commit
+	ca = commit -a
+	st = status
+	br = branch
+	ba = branch -a
+	bm = branch --merged
+	bn = branch --no-merged
+	type = cat-file -t
+	dump = cat-file -p
+
+	# Structural diff via difftastic, on demand.
+	dft = -c diff.external=difft diff
+
+	ps = "!git push origin $(git rev-parse --abbrev-ref HEAD)"
+	pl = "!git pull origin $(git rev-parse --abbrev-ref HEAD)"
+
+	hist = log --pretty=format:\"%Cgreen%h %Creset%cd %Cblue[%cn] %Creset%s%C(yellow)%d%C(reset)\" --graph --date=relative --decorate --all
+	llog = log --graph --name-status --pretty=format:\"%C(red)%h %C(reset)(%cd) %C(green)%an %Creset%s %C(yellow)%d%Creset\" --date=relative
+
+	# These three used `peco`, which is unmaintained and was never installed.
+	# Rewritten on fzf, which ships with zsh4humans.
+	a = "!git status --short | fzf --multi --ansi | awk '{print $2}' | xargs -r git add"
+	df = "!git hist | fzf --ansi | awk '{print $2}' | xargs -I {} git diff {}^ {}"
+	find = "!f() { git log --pretty=format:\"%h %cd [%cn] %s%d\" --date=relative -S\"$1\" | fzf --ansi | awk '{print $1}' | xargs -I {} git diff {}^ {}; }; f"
+
+	# `hub` is deprecated and unmaintained; gh is its successor.
+	open = "!gh browse"
+
+	edit-unmerged = "!f() { git ls-files --unmerged | cut -f2 | sort -u ; }; nvim `f`"
+	add-unmerged = "!f() { git ls-files --unmerged | cut -f2 | sort -u ; }; git add `f`"
+
+[difftool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\"
+
+[mergetool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	required = true
+	process = git-lfs filter-process
+
+[ghq]
+	root = ~/.ghq

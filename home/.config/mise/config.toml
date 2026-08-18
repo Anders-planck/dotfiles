@@ -1,0 +1,25 @@
+# Global tool versions. mise replaces nvm, asdf and fnm — all three used to be
+# installed at once on this machine and fought over PATH.
+#
+# Pinned to major versions rather than "latest": "latest" re-resolves on every
+# machine and every install, which is the opposite of reproducible, and makes
+# `mise ls` report tools as missing until they are downloaded.
+#
+# Add a tool:      mise use -g <tool>@<version>
+# Install all:     mise install
+# Per-project:     mise.toml in the project root (overrides this file)
+
+[tools]
+node = "24"
+ruby = "3.2.2"
+
+# Enabled on demand — uncomment and run `mise install`:
+# bun = "1"
+# python = "3.13"
+# rust = "stable"
+# ghq = "latest"
+
+[settings]
+# Read .nvmrc / .node-version / package.json devEngines like nvm did.
+# Off by default in mise; this restores the behaviour the nvm setup had.
+idiomatic_version_file_enable_tools = ["node"]

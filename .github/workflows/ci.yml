@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history: catches secrets in old commits too
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: shellcheck + zsh -n
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # shellcheck is pre-installed on GitHub's Ubuntu runners.
+      - name: shellcheck (sh/bash only)
+        run: |
+          files=$(git ls-files 'install.sh' 'bin/*' | while read -r f; do
+            head -1 "$f" | grep -qE '^#!.*(bash|sh)$' && echo "$f"
+          done)
+          echo "$files"
+          [ -n "$files" ] && shellcheck -S warning $files || true
+      # shellcheck cannot parse zsh; use zsh's own syntax check.
+      - name: zsh -n
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+          rc=0
+          for f in $(git ls-files 'home/.config/zsh/**/*.zsh' 'home/.config/zsh/.zshrc' 'home/.config/zsh/.zshenv' 'home/.zshenv'); do
+            zsh -n "$f" || { echo "FAIL $f"; rc=1; }
+          done
+          exit $rc
+
+  install-test:
+    name: install into a sandboxed HOME
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run installer with a fake HOME
+        run: |
+          mkdir -p /tmp/fakehome
+          HOME=/tmp/fakehome ./install.sh --link-only
+          test -L /tmp/fakehome/.zshenv
+          test -L /tmp/fakehome/.config/zsh/.zshrc
+          echo "linked OK"

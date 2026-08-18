@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Point iTerm2 at this repo for its preferences, and export/import them.
+#
+#   bin/iterm2 setup    tell iTerm2 to read prefs from this repo (run once)
+#   bin/iterm2 export   copy the live prefs into the repo, as diffable XML
+#   bin/iterm2 status   show what iTerm2 is currently configured to do
+#
+# Why a dedicated script instead of a symlink: iTerm2 does not read its prefs
+# from a fixed path in $HOME. It reads com.googlecode.iterm2.plist from whatever
+# folder you nominate via PrefsCustomFolder — so the file lives at the repo root
+# rather than under home/, and we set the pointer instead of linking.
+#
+# Quit iTerm2 before running `setup`: it rewrites its plist on exit and will
+# clobber changes made while it is running.
+set -euo pipefail
+
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+dir="$repo/iterm2"
+plist="$dir/com.googlecode.iterm2.plist"
+live="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
+domain="com.googlecode.iterm2"
+
+usage() {
+	sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+	exit "${1:-0}"
+}
+
+case "${1:-}" in
+	setup)
+		[ -f "$plist" ] || {
+			printf 'missing %s — run `bin/iterm2 export` first\n' "$plist" >&2
+			exit 1
+		}
+		if pgrep -xq iTerm2 2>/dev/null || pgrep -xq iTerm 2>/dev/null; then
+			printf 'iTerm2 is running. Quit it first, or it will overwrite these settings on exit.\n' >&2
+			exit 1
+		fi
+		defaults write "$domain" PrefsCustomFolder -string "$dir"
+		defaults write "$domain" LoadPrefsFromCustomFolder -bool true
+		# Write changes straight back to the repo folder instead of asking.
+		defaults write "$domain" NoSyncNeverRemindPrefsChangesLostForFile_selection -int 2
+		printf 'iTerm2 will now read and write prefs in:\n  %s\n' "$dir"
+		printf 'Start iTerm2 and confirm under Settings > General > Settings.\n'
+		;;
+	export)
+		[ -f "$live" ] || {
+			printf 'no live prefs at %s\n' "$live" >&2
+			exit 1
+		}
+		mkdir -p "$dir"
+		# `defaults export` flushes cfprefsd's in-memory state; a plain cp can
+		# otherwise capture a stale file.
+		defaults export "$domain" - >"$plist"
+		plutil -convert xml1 "$plist"
+		chmod 644 "$plist"
+		printf 'exported -> %s (%s lines)\n' "$plist" "$(wc -l <"$plist" | tr -d ' ')"
+		;;
+	status)
+		printf 'app            %s\n' "$([ -d /Applications/iTerm.app ] && echo installed || echo MISSING)"
+		printf 'brew cask      %s\n' "$(brew list --cask 2>/dev/null | grep -qx iterm2 && echo managed || echo 'not managed by brew')"
+		printf 'custom folder  %s\n' "$(defaults read "$domain" PrefsCustomFolder 2>/dev/null || echo 'not set')"
+		printf 'load from it   %s\n' "$(defaults read "$domain" LoadPrefsFromCustomFolder 2>/dev/null || echo 'not set')"
+		printf 'repo plist     %s\n' "$([ -f "$plist" ] && echo "$plist" || echo MISSING)"
+		;;
+	-h | --help | '') usage 0 ;;
+	*)
+		printf 'unknown command: %s\n\n' "$1" >&2
+		usage 2
+		;;
+esac

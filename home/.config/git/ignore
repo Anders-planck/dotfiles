@@ -1,0 +1,29 @@
+# Global gitignore (core.excludesfile). Applies to every repo on this machine.
+#
+# This used to be the dotfiles repo's own .gitignore, copied to ~/.gitignore by
+# install.sh — which meant the repo's rules (.idea/, secrets.zsh) leaked into
+# every project. They are now separate files.
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.nvimlog
+
+# Local env and secrets — belt and braces; never rely on this alone
+.env.local
+*.local.env
+
+# Tooling caches that occasionally escape a project's own ignore file
+.direnv/
+.mise.local.toml
