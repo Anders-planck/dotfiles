@@ -56,7 +56,7 @@ alias ed="${EDITOR:-nano}"
 alias f=fuck
 alias fzfp='fzf --preview "${FZF_CAT}"'
 
-alias gemsets='rbenv gemset list'
+alias gemsets='mise ls ruby'
 alias grep='grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn}'
 alias gtr='git log --oneline --decorate --graph --all'
 alias gtrl='git log --graph --pretty='\''%C(yellow)%h%Creset -%C(auto)%d%Creset %s %C(bold magenta)(%ar) %C(bold blue)<%an>%Creset'\'' --all'

@@ -98,6 +98,34 @@ done < <(find "$src" -type f ! -name '.DS_Store' | sort)
 
 say "$linked linked, $skipped already current"
 
+# Prune links left behind by files that have since been removed from home/.
+# Without this, deleting a config here leaves a dangling symlink in $HOME
+# forever — and a dangling ~/.config/zsh/conf.d/*.zsh makes zsh error on start.
+pruned=0
+while IFS= read -r dead; do
+	target=$(readlink "$dead")
+	case "$target" in
+		"$src"/*) ;;
+		*) continue ;; # not ours — leave it alone
+	esac
+	if [ "$dry" -eq 1 ]; then
+		printf '  would prune %s (-> missing %s)\n' "${dead#"$HOME"/}" "${target#"$src"/}"
+	else
+		rm -- "$dead"
+		printf '  prune  %s\n' "${dead#"$HOME"/}"
+	fi
+	pruned=$((pruned + 1))
+done < <({
+	# Only look where we actually install: the top-level entries of home/, plus
+	# $HOME itself at depth 1. Scanning all of $HOME takes minutes.
+	find "$HOME" -maxdepth 1 -type l 2>/dev/null
+	for top in $(find "$src" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;); do
+		d="$HOME/$top"
+		[ -d "$d" ] && find "$d" -type l 2>/dev/null
+	done
+} | while IFS= read -r l; do [ -e "$l" ] || printf '%s\n' "$l"; done | sort -u)
+[ "$pruned" -gt 0 ] && say "$pruned dangling link(s) pruned"
+
 # ---- 3. secrets -------------------------------------------------------------
 if [ "$dry" -eq 0 ]; then
 	mkdir -p "$HOME/.config/zsh"

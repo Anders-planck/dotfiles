@@ -1,65 +1,22 @@
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-if type pyenv &>/dev/null; then
+# Language runtimes: mise, and only mise.
+#
+# This file used to initialise five separate managers — pyenv, nodenv, rbenv,
+# phpenv, jenv — plus sourcing asdf, each with its own `_evalcache <tool> init`
+# and its own PATH shim layer. Combined with nvm/asdf/fnm installed via brew,
+# that was up to nine tools competing for the same PATH entries, and the winner
+# depended on file load order.
+#
+# mise replaces all of them: it is a drop-in for nvm/nodenv (reads .nvmrc and
+# .node-version), for pyenv, rbenv, and for asdf's plugin ecosystem.
+#
+#   mise use -g node@24        set a global version
+#   mise use python@3.13       pin one for the current project (writes mise.toml)
+#   mise ls --current          what is active here and where it came from
+#
+# Global versions live in ~/.config/mise/config.toml, pinned rather than "latest".
+# `mise activate` is wired at the end of .zshrc — this file intentionally does
+# nothing but document that.
 
-    _evalcache pyenv init - no_completion
-    export PYENV_SHELL=zsh
-
-    if [ ! -d "$HOME/.pyenv" ]; then
-        ln -sFi "$PYENV_ROOT" "$HOME/.pyenv"
-    fi
-fi
-
-
-export NODENV_ROOT="$HOME/.nodenv"
-export PATH="$NODENV_ROOT/bin:$PATH"
-if type nodenv &>/dev/null; then
-
-    _evalcache nodenv init - nocompletions
-    export NODENV_SHELL=zsh
-
-    if [ ! -d "$HOME/.nodenv" ]; then
-        ln -sFi "$NODENV_ROOT" "$HOME/.nodenv"
-    fi
-fi
-
-
-export RBENV_ROOT="$HOME/.rbenv"
-export PATH="$RBENV_ROOT/bin:$PATH"
-if type rbenv &>/dev/null; then
-
-    _evalcache rbenv init - no_completion
-    export RBENV_SHELL=zsh
-
-    if [ ! -d "$HOME/.rbenv" ]; then
-        ln -sFi "$RBENV_ROOT" "$HOME/.rbenv"
-    fi
-fi
-
-
-export PHPENV_ROOT="$HOME/.phpenv"
-export PATH="$PHPENV_ROOT/bin:$PATH"
-if type phpenv &>/dev/null; then
-
-    _evalcache phpenv init - nocompletions
-	export PHPENV_SHELL=zsh
-
-    if [ ! -d "$HOME/.phpenv" ]; then
-        ln -sFi "$PHPENV_ROOT" "$HOME/.phpenv"
-    fi
-
-    # phpenv install alias
-    # alias 'phpenv install'='CONFIGURE_OPTS="--with-zlib-dir=$(brew --prefix zlib) --with-bz2=$(brew --prefix bzip2) --with-curl=$(brew --prefix curl) --with-iconv=$(brew --prefix libiconv) --with-libedit=$(brew --prefix libedit) --with-readline=$(brew --prefix readline) --with-tidy=$(brew --prefix tidy-html5)" phpenv install'
-fi
-
-
-export JENV_ROOT="$HOME/.jenv"
-export PATH="$JENV_ROOT/bin:$PATH"
-if type jenv &>/dev/null; then
-
-    _evalcache jenv init -
-
-    if [ ! -d "$HOME/.jenv" ]; then
-        ln -sFi "$JENV_ROOT" "$HOME/.jenv"
-    fi
+if ! type mise &> /dev/null; then
+	print -ru2 -- 'mise not installed — language runtimes will not resolve. See https://mise.jdx.dev'
 fi
