@@ -101,30 +101,44 @@ say "$linked linked, $skipped already current"
 # Prune links left behind by files that have since been removed from home/.
 # Without this, deleting a config here leaves a dangling symlink in $HOME
 # forever — and a dangling ~/.config/zsh/conf.d/*.zsh makes zsh error on start.
+# Only look where we actually install: $HOME at depth 1, plus the top-level
+# directories home/ provides. Walking all of $HOME takes minutes.
+#
+# Collected into a variable first, deliberately. macOS ships bash 3.2, whose
+# parser mishandles a comment inside a `{ ... }` group inside `<( ... )` when the
+# group also contains a `-print0 | while read -d ''` pipeline: the comment text
+# is re-read as a command ("plus: command not found", "0: ambiguous redirect").
+# Keeping the collection flat sidesteps it, and a here-doc feeds the loop without
+# the subshell a pipeline would create — so the counter below survives.
+collect_links() {
+	find "$HOME" -maxdepth 1 -type l 2>/dev/null
+	find "$src" -mindepth 1 -maxdepth 1 -type d 2>/dev/null |
+		while IFS= read -r top; do
+			d="$HOME/$(basename "$top")"
+			[ -d "$d" ] && find "$d" -type l 2>/dev/null
+		done
+	return 0
+}
+
 pruned=0
 while IFS= read -r dead; do
-	target=$(readlink "$dead")
+	[ -n "$dead" ] || continue
+	[ -e "$dead" ] && continue # link still resolves — leave it
+	target=$(readlink "$dead") || continue
 	case "$target" in
 		"$src"/*) ;;
 		*) continue ;; # not ours — leave it alone
 	esac
 	if [ "$dry" -eq 1 ]; then
-		printf '  would prune %s (-> missing %s)\n' "${dead#"$HOME"/}" "${target#"$src"/}"
+		printf '  would prune %s\n' "${dead#"$HOME"/}"
 	else
 		rm -- "$dead"
 		printf '  prune  %s\n' "${dead#"$HOME"/}"
 	fi
 	pruned=$((pruned + 1))
-done < <({
-	# Only look where we actually install: the top-level entries of home/, plus
-	# $HOME itself at depth 1. Scanning all of $HOME takes minutes.
-	find "$HOME" -maxdepth 1 -type l 2>/dev/null
-	find "$src" -mindepth 1 -maxdepth 1 -type d -print0 |
-		while IFS= read -r -d '' top; do
-			d="$HOME/$(basename "$top")"
-			[ -d "$d" ] && find "$d" -type l 2>/dev/null
-		done
-} | while IFS= read -r l; do [ -e "$l" ] || printf '%s\n' "$l"; done | sort -u)
+done <<EOF
+$(collect_links | sort -u)
+EOF
 [ "$pruned" -gt 0 ] && say "$pruned dangling link(s) pruned"
 
 # ---- 3. secrets -------------------------------------------------------------
