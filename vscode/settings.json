@@ -1,295 +1,232 @@
 {
-    "workbench.preferredHighContrastColorTheme": "Catppuccin Mocha",
-    "workbench.iconTheme": "catppuccin-mocha",
-    "workbench.colorTheme": "Catppuccin Mocha",
-
-    "window.zoomLevel": 0.5,
-
-    "files.autoSave": "afterDelay",
-
-    "terminal.integrated.env.linux": {},
-    "dart.flutterSdkPath": "/Users/anders/Documents/flutter",
-    "console-ninja.featureSet": "Community",
-    "javascript.updateImportsOnFileMove.enabled": "always",
-    "git.autofetch": true,
-
-    "editor.fontFamily": "'RecMonoCasual Nerd Font','CaskaydiaCove Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace",
-    "editor.fontLigatures": true,
-    //"editor.fontLigatures": "'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'calt', 'dlig'",
-    "editor.fontSize": 16,
-    "editor.lineHeight": 30,
-    "editor.letterSpacing": 0.5,
-    "editor.fontWeight": "400",
-    "editor.cursorStyle": "line",
-    "editor.cursorWidth": 5,
-    "editor.cursorBlinking":"smooth",
-    "editor.renderWhitespace": "none",
-    "editor.cursorSmoothCaretAnimation": "explicit",
-    "editor.smoothScrolling": true,
-    "editor.minimap.enabled": false,
-    "editor.suggestFontSize": 16,
-    "editor.suggestLineHeight": 30,
-
-    "editor.copyWithSyntaxHighlighting": false,
-    "diffEditor.ignoreTrimWhitespace": false,
-    "editor.emptySelectionClipboard": false,
-    "workbench.editor.enablePreview": false,
-    "window.newWindowDimensions": "inherit",
-    "editor.multiCursorModifier": "ctrlCmd",
-    "files.trimTrailingWhitespace": true,
-    "diffEditor.renderSideBySide": false,
-    "editor.snippetSuggestions": "top",
-    "editor.detectIndentation": false,
-    "window.nativeFullScreen": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "workbench.editor.showTabs": "none",
-    "editor.lineNumbers": "off",
-    "editor.guides.indentation": false,
-
-
-    // Silence the Noise
-    "breadcrumbs.enabled": false,
-    "scm.diffDecorations": "none",
-    "editor.hover.delay": 1500,
-    "editor.hover.enabled": "on",
-    "editor.matchBrackets": "never",
-    "workbench.tips.enabled": false,
-    "editor.colorDecorators": false,
-    "git.decorations.enabled": false,
-    "workbench.startupEditor": "none",
-    "editor.lightbulb.enabled": "off",
-    "editor.selectionHighlight": false,
-    "editor.overviewRulerBorder": false,
-    "editor.renderLineHighlight": "none",
-    "editor.occurrencesHighlight": "off",
-    "problems.decorations.enabled": false,
-    "editor.renderControlCharacters": false,
-    "editor.hideCursorInOverviewRuler": true,
-    "editor.gotoLocation.multipleReferences": "goto",
-    "editor.gotoLocation.multipleDefinitions": "goto",
-    "editor.gotoLocation.multipleDeclarations": "goto",
-    "workbench.editor.enablePreviewFromQuickOpen": false,
-    "editor.gotoLocation.multipleImplementations": "goto",
-    "editor.gotoLocation.multipleTypeDefinitions": "goto",
-
-
-
-
-    "search.useIgnoreFiles": false,
-    "search.exclude": {
-        // Hide everything in /vendor, except the "laravel" and "livewire" folder.
-        "**/vendor/{[^l],?[^ai]}*": true,
-        // Hide everything in /public, except "index.php"
-        "**/public/{[^i],?[^n]}*": true,
-        "**/node_modules": true,
-        "**/dist": true,
-        "**/_ide_helper.php": true,
-        "**/composer.lock": true,
-        "**/package-lock.json": true,
-        "storage": true,
-        ".phpunit.result.cache": true
-    },
-
-        /**
-      * Code
-      **/
-      // Include "-" in word selection.
-      "editor.wordSeparators": "`~!@#%^&*()=+[{]}\\|;:'\",.<>/?",
-      "emmet.includeLanguages": {
-          "blade": "html",
-          "vue-html": "html",
-          "vue": "html",
-          "react": "html",
-          "javascript": "html"
-      },
-      "files.associations": {
-          ".php_cs": "php",
-          ".php_cs.dist": "php"
-      },
-
-      /**
-      * PHP
-      **/
-      "php.suggest.basic": false,
-
-      /**
-      * Prettier
-      **/
-      "[javascript]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-      "[typescriptreact]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-      "[tailwindcss]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-      "[vue]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-      "[javascriptreact]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-      "prettier.requireConfig": true,
-      "prettier.useEditorConfig": false,
-      "explorer.sortOrder": "type",
-      "prettier.tabWidth": 4,
-      "vetur.format.options.tabSize": 4,
-      "workbench.tree.indent": 15,
-      "[html]": {
-          "editor.formatOnSave": true
-      },
-      "editor.wordWrapColumn": 120,
-      "[css]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode",
-          "editor.formatOnSave": true
-      },
-
-      "editor.quickSuggestions": {
-          "strings": true
-      },
-      "[jsonc]": {
-          "editor.defaultFormatter": "esbenp.prettier-vscode"
-      },
-      "[json]": {
-          "editor.defaultFormatter": "vscode.json-language-features"
-      },
-
-      "editor.linkedEditing": true,
-      "editor.formatOnSave": false,
-
-    "symbols.hidesExplorerArrows": false,
-    "redhat.telemetry.enabled": true,
-    "typescript.updateImportsOnFileMove.enabled": "always",
-    "security.workspace.trust.untrustedFiles": "open",
-
-    "terminal.integrated.env.osx": {},
-    "terminal.integrated.fontFamily": "'RecMonoCasual Nerd Font','CaskaydiaCove Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace",
-    "terminal.integrated.fontSize": 15,
-    "terminal.integrated.lineHeight": 1.5,
-
-    "chat.editor.fontWeight": "bold",
-
-    "github.copilot.enable": {
-      "*": true,
-      "plaintext": true,
-      "markdown": true,
-      "scminput": true
-    },
-
-    "makefile.configureOnOpen": true,
-
-
-    /* "apc.electron": {
-      "frame": true,
-      "transparent": true,
-      "titleBarStyle": "hidden",
-      "vibrancy": "ultra-dark",
-      "trafficLightPosition": {
-        "x": 15,
-        "y": 13
+  "files.autoSave": "afterDelay",
+  "window.zoomLevel": 1,
+  "terminal.integrated.env.linux": {},
+  "editor.minimap.enabled": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "git.autofetch": true,
+  "editor.fontFamily": "'DankMono Nerd Font','UbuntuSansMono Nerd Font','JetBrainsMono Nerd font','Fira Code','Cascadia Code','FiraCode Nerd font','MonoLisa Nerd font Mono', Menlo, Monaco, 'Courier New', monospace, 'Dank Mono',Menlo,'RecMonoCasual Nerd Font','CaskaydiaCove Nerd Font Mono',CommitMono,'JetBrainsMono Nerd font'",
+  "editor.fontSize": 15,
+  "editor.fontLigatures": true,
+  "editor.lineHeight": 2,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "comment",
+        "settings": {
+          "fontStyle": "italic"
+        }
       }
-    },
-
-    "apc.stylesheet": {
-      "*": "font-family: 'RecMonoCasual Nerd Font','CaskaydiaCove Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace",
-      ".editor .title": "background: transparent !important",
-      ".actions-container.highlight-toogle": "display: none",
-    }, */
-
-    "vscode_custom_css.imports": [
-      "file:///Users/anders/Documents/vscode-settings/custom-vscode.css",
-      "file:///Users/anders/Documents/vscode-settings/custom-vscode-script.js"
+    ]
+  },
+  "editor.cursorStyle": "line",
+  "editor.cursorWidth": 5,
+  "editor.cursorBlinking": "solid",
+  "editor.renderWhitespace": "none",
+  "editor.cursorSmoothCaretAnimation": "explicit",
+  "editor.smoothScrolling": true,
+  "symbols.hidesExplorerArrows": false,
+  "redhat.telemetry.enabled": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "security.workspace.trust.untrustedFiles": "open",
+  "terminal.integrated.env.osx": {},
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": true,
+    "vhdl": false,
+    "dart": true
+  },
+  "makefile.configureOnOpen": true,
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "window.commandCenter": false,
+  "vue.server.hybridMode": true,
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "editor.mouseWheelZoom": true,
+  "terminal.integrated.mouseWheelZoom": true,
+  "catppuccin-icons.associations.languages": {
+    "typescriptreact": "typescript-react"
+  },
+  "catppuccin-icons.associations.extensions": {
+    "spec.ts": "typescript-test"
+  },
+  "catppuccin-icons.associations.files": {
+    "vite.config.ts": "vite"
+  },
+  "catppuccin-icons.associations.folders": {
+    "typings": "folder_types"
+  },
+  "catppuccin-icons.hidesExplorerArrows": false,
+  "catppuccin-icons.specificFolders": true,
+  "catppuccin-icons.monochrome": false,
+  "editor.semanticHighlighting.enabled": true,
+  "terminal.integrated.minimumContrastRatio": 1,
+  "gopls": {
+    "ui.semanticTokens": true
+  },
+  "workbench.colorTheme": "Tokyo Night",
+  "catppuccin.accentColor": "teal",
+  "[css]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  },
+  "cursor.composer.shouldChimeAfterChatFinishes": true,
+  "cursor.composer.shouldAllowCustomModes": true,
+  "cursor.diffs.useCharacterLevelDiffs": true,
+  "cursor.terminal.usePreviewBox": true,
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 5,
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "custom-ui-style.font.sansSerif": "'Futura','Avenir','Dank Mono', 'Cascadia Code','Dank Mono','FiraCode Nerd font Mono'",
+  "workbench.tree.enableStickyScroll": true,
+  "workbench.tree.indent": 16,
+  "explorer.compactFolders": false,
+  "window.titleBarStyle": "custom",
+  "workbench.colorCustomizations": {
+    "terminal.background": "#00000000"
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.js",
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "*.jsx": "${capture}.js",
+    "*.tsx": "${capture}.ts",
+    "tsconfig.json": "tsconfig.*.json",
+    "prettier.config.mjs": ".prettierignore",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
+    "pubspec.yaml": "pubspec.lock,pubspec_overrides.yaml,.packages,.flutter-plugins,.flutter-plugins-dependencies,.metadata",
+    "*.dart": "${capture}.g.dart"
+  },
+  "explorer.confirmDelete": false,
+  "extensions.autoUpdate": "on",
+  "ruff.importStrategy": "useBundled",
+  "[python]": {
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.defaultColorDecorators": "auto",
+    "gitlens.codeLens.symbolScopes": [
+      "!Module"
     ],
-
-      // "editor.fontLigatures": false,
-      "diffEditor.wordWrap": "on",
-      "notebook.output.wordWrap": true,
-      "editor.minimap.maxColumn": 250,
-      "codesnap.containerPadding": "8em",
-      "codesnap.boxShadow": "rgba(0, 0, 0, 0.55) 0px 12px 24px",
-      "explorer.confirmDelete": false,
-      "editor.accessibilitySupport": "off",
-      "chat.editor.wordWrap": "on",
-      "editor.wordWrap": "wordWrapColumn",
-      "[php]": {
-          "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
-      },
-      "tailwindCSS.includeLanguages": {
-          "plaintext": "html"
-      },
-      "tailwindCSS.experimental.configFile": null,
-      "workbench.activityBar.location": "hidden",
-      "workbench.statusBar.visible": false,
-      "editor.inlineSuggest.suppressSuggestions": true,
-      "codesnap.backgroundColor": "#FFC540",
-      "codesnap.showLineNumbers": false,
-      "codesnap.roundedCorners": true,
-      "editor.padding.top": 16,
-      "editor.stickyScroll.enabled": false,
-
-      "editor.tokenColorCustomizations": {
-          "textMateRules": [
-              {
-                "scope": [
-                  "comment",
-                  "keyword",
-                  "variable.language",
-                  "entity.other.attribute-name.html",
-                  "entity.other.attribute-name",
-                  "keyword.control",
-                  "storage.type",
-                  "comment",
-                  "comment.block",
-                  "comment.line"
-                ],
-                "settings": {
-                  "fontStyle": ""
-                }
-              }
-            ]
-      },
-      "material-icon-theme.saturation": 0,
-      "workbench.sideBar.location": "right",
-      "material-icon-theme.files.color": "#42a5f5",
-      "workbench.tree.enableStickyScroll": false,
-
-      "explorer.fileNesting.expand": true,
-      "explorer.fileNesting.patterns": {
-          "*.ts": "${capture}.js",
-          "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
-          "*.jsx": "${capture}.js",
-          "*.tsx": "${capture}.ts",
-          "tsconfig.json": "tsconfig.*.json",
-          "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb",
-          "pubspec.yaml": "pubspec.lock,pubspec_overrides.yaml,.packages,.flutter-plugins,.flutter-plugins-dependencies,.metadata",
-          "*.dart": "${capture}.g.dart"
+    "editor.formatOnType": true,
+    "editor.wordBasedSuggestions": "off",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.organizeImports": "always"
     },
-    "yaml.disableSchemaDetection": [
-        "**/docker-compose.yml",
-        "**/docker-compose.yaml",
-        "**/docker-compose.*.yml",
-        "**/docker-compose.*.yaml",
-        "**/compose.yml",
-        "**/compose.yaml",
-        "**/compose.*.yml",
-        "**/compose.*.yaml",
-        "**/.github/workflows/*.yml",
-        "**/.github/workflows/*.yaml",
-        "**/.gitea/workflows/*.yml",
-        "**/.gitea/workflows/*.yaml",
-        "**/.forgejo/workflows/*.yml",
-        "**/.forgejo/workflows/*.yaml"
-    ],
-    "yaml.schemas": {
-        "file:///Users/anders/.vscode/extensions/continue.continue-2.0.0-darwin-arm64/config-yaml-schema.json": [
-            ".continue/**/*.yaml"
-        ]
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "supermaven.allowGitignore": true,
+  "cursor.general.gitGraphIndexing": "enabled",
+  "window.autoDetectColorScheme": false,
+  "workbench.iconTheme": "catppuccin-mocha",
+  "workbench.view.alwaysShowHeaderActions": true,
+  "workbench.view.showQuietly": {
+    "workbench.panel.output": true
+  },
+  "workbench.preferredLightColorTheme": "Vesper",
+  "console-ninja.featureSet": "Community",
+  "docker.extension.enableComposeLanguageServer": false,
+  "dart.flutterSdkPath": "/Users/anders/flutter",
+  "redoclyOpenAPI.user.anonymousId": "b36d67e0-1411-4234-bc17-4d5ddb84c915",
+  "chat.mcp.serverSampling": {
+    "Windsurf: brave-search": {
+      "allowedModels": [
+        "github.copilot-chat/gpt-4.1",
+        "github.copilot-chat/claude-3.5-sonnet"
+      ]
     }
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "headerClassName"
+  ],
+  "python.analysis.typeCheckingMode": "standard",
+  "behave-vsc.featuresPath": "/**/*.feature",
+  "superdesign.aiModelProvider": "anthropic",
+  "superdesign.aiModel": "claude-4-sonnet-20250514",
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "claudeCode.useTerminal": true,
+  "neonLocal.port": 1024,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "stripe.java.home": "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "json.schemaDownload.enable": true,
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.allowDangerouslySkipPermissions": true,
+  "claudeCode.initialPermissionMode": "bypassPermissions",
+  "workbench.preferredDarkColorTheme": "Solarized Light",
+  "terminal.integrated.gpuAcceleration": "off",
+  "window.systemColorTheme": "dark",
+  "explorer.confirmDragAndDrop": false,
+  "workbench.editorAssociations": {
+    "*.copilotmd": "vscode.markdown.preview.editor",
+    "*.md": "xlsxViewer.md"
+  },
+  "yaml.schemas": {
+    "file:///Users/anders/.vscode/extensions/continue.continue-1.2.22-darwin-arm64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ],
+    "file:///Users/anders/.vscode/extensions/continue.continue-2.0.0-darwin-arm64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ]
+  },
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
+  ],
+  "chat.viewSessions.orientation": "stacked",
+  "diffEditor.renderSideBySide": false,
+  "diffEditor.hideUnchangedRegions.enabled": true,
+  "xlsxViewer.md.stickyToolbar": true,
+  "xlsxViewer.md.wordWrap": true,
+  "xlsxViewer.md.syncScroll": true,
+  "xlsxViewer.md.previewPosition": "right",
+  "xlsxViewer.md.moveMdButtonsToEnd": false,
+  "xlsxViewer.showPopups": true,
+  "xlsxViewer.md.showOutline": false,
+  "xlsxViewer.md.showLineNumbers": true,
+  "diffEditor.experimental.showMoves": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
   }
+}

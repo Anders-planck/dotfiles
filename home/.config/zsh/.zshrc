@@ -149,8 +149,8 @@ path=(
     ~/.opencode/bin                                         # opencode
     ~/.antigravity/antigravity/bin                          # Antigravity
     ~/.bun/bin                                              # Bun
-    /Library/Frameworks/Python.framework/Versions/3.11/bin   # Python 3.11 (wins over 3.13)
-    /Library/Frameworks/Python.framework/Versions/3.13/bin   # Python 3.13
+    # Python comes from mise, not the python.org framework installers. Those
+    # two entries used to sit near the front of PATH and shadowed everything.
     $NDK_HOME                                               # Android NDK
     $ANDROID_HOME/emulator
     $ANDROID_HOME/tools

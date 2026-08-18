@@ -1,25 +1,38 @@
-# Global tool versions. mise replaces nvm, asdf and fnm — all three used to be
-# installed at once on this machine and fought over PATH.
+# Global tool versions — mise is the only runtime manager on this machine.
 #
-# Pinned to major versions rather than "latest": "latest" re-resolves on every
-# machine and every install, which is the opposite of reproducible, and makes
-# `mise ls` report tools as missing until they are downloaded.
+# It replaces nvm, asdf, fnm, nodenv, pyenv, rbenv, phpenv and jenv, all of which
+# were installed or configured at once and fought over the same PATH entries,
+# with the winner decided by shell-fragment load order.
 #
-# Add a tool:      mise use -g <tool>@<version>
-# Install all:     mise install
-# Per-project:     mise.toml in the project root (overrides this file)
+# Pinned to major versions rather than "latest": "latest" re-resolves against the
+# GitHub API on every shell start, which is both non-reproducible and produced a
+# rate-limit warning on every single prompt when unauthenticated.
+#
+#   mise use -g <tool>@<version>   set a global version
+#   mise use <tool>@<version>      pin for this project (writes ./mise.toml)
+#   mise ls --current              what is active here, and where it came from
+#   mise install                   install everything declared below
+#
+# NOT managed here: Rust. rustup stays the source of truth, because this machine
+# has nine cross-compilation targets installed (Android arm64/armv7/i686/x86_64,
+# iOS, x86_64-pc-windows-msvc) plus cargo-xwin. mise's rust plugin does not
+# manage rustup targets or components, so migrating would break all of them.
 
 [tools]
 node = "24"
+python = "3.13"
 ruby = "3.2.2"
-
-# Enabled on demand — uncomment and run `mise install`:
-# bun = "1"
-# python = "3.13"
-# rust = "stable"
-# ghq = "latest"
+go = "1.26"
+bun = "1"
+java = "temurin-21"
+ghq = "latest"   # pinned: "latest" re-queries the GitHub API each startup
 
 [settings]
-# Read .nvmrc / .node-version / package.json devEngines like nvm did.
-# Off by default in mise; this restores the behaviour the nvm setup had.
+# Read .nvmrc / .node-version / package.json devEngines, like nvm did.
+# mise disables idiomatic version files by default; this restores that behaviour.
 idiomatic_version_file_enable_tools = ["node"]
+
+# Several mise operations (version lists, python attestation checks, self-update)
+# call the GitHub API and fail with 403 when unauthenticated. Raise the limit by
+# exporting a token from ~/.config/zsh/secrets.zsh (0600) — never commit one:
+#   export MISE_GITHUB_TOKEN="$(gh auth token)"

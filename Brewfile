@@ -1,11 +1,11 @@
 tap "anomalyco/tap"
-tap "encoredev/tap", trusted: true
+tap "encoredev/tap"
 tap "homebrew/command-not-found"
-tap "jetbrains/utils", trusted: true
-tap "mongodb/brew", trusted: true
-tap "stripe/stripe-cli", trusted: true
-tap "supabase/tap", trusted: true
-tap "symfony-cli/tap", trusted: true
+tap "jetbrains/utils"
+tap "mongodb/brew"
+tap "stripe/stripe-cli"
+tap "supabase/tap"
+tap "symfony-cli/tap"
 # Any-to-PostScript filter
 brew "a2ps"
 # Static checker for GitHub Actions workflow files
@@ -56,16 +56,12 @@ brew "fortune"
 brew "fzf"
 # GitHub command-line tool
 brew "gh"
-# Remote repository management made easy
-brew "ghq"
 # Distributed revision control system
 brew "git"
 # Syntax-highlighting pager for git and diff output
 brew "git-delta"
 # Audit git repos for secrets
 brew "gitleaks"
-# Open source programming language to build simple/reliable/efficient software
-brew "go"
 # Framework for layout and rendering of i18n text
 brew "pango"
 # Graph visualization software from AT&T and Bell Labs
@@ -96,6 +92,8 @@ brew "llvm"
 brew "makensis"
 # Modern and intuitive terminal-based text editor
 brew "micro"
+# MongoDB Shell to connect, configure, query, and work with your MongoDB database
+brew "mongosh"
 # NCurses Disk Usage
 brew "ncdu"
 # Incremental parsing library
@@ -156,33 +154,16 @@ brew "yq"
 brew "zizmor"
 # Shell extension to navigate your filesystem faster
 brew "zoxide"
-# The AI coding agent built for the terminal.
-brew "anomalyco/tap/opencode", trusted: true
-# The static analysis-powered Go framework for building backend applications
-brew "encoredev/tap/encore"
-# 🔧 Run Qodana as fast as possible, with minimum effort required
-brew "jetbrains/utils/qodana"
-# High-performance, schema-free, document-oriented database
-brew "mongodb/brew/mongodb-community@7.0"
-# Stripe CLI utility
-brew "stripe/stripe-cli/stripe"
-# Supabase CLI
-brew "supabase/tap/supabase"
-# Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
-brew "symfony-cli/tap/symfony-cli"
 # Open source IDE for exploring and testing APIs
 cask "bruno"
 # Clipboard manager
 cask "copyclip"
 # Launch builds and start simulators from your menu bar
 cask "expo-orbit"
-# The other 1 Nerd Font casks that were installed on this machine are
-# deliberately NOT declared here. Only the fonts the configs actually reference
-# are kept: PlemolJP (ghostty), RecursiveMono (vscode css), JetBrains Mono, and
-# symbols-only. The old fonts/main.sh installed all 67 from the Nerd Fonts
-# catalogue; that directory is gone. NOTE: `brew bundle cleanup --force` will
-# uninstall the undeclared ones — that is intentional convergence, but run
-# `brew bundle cleanup` (no --force) first to see the list.
+# Other Nerd Font casks installed on this machine are deliberately not
+# declared: only the fonts the configs reference are kept. The old
+# fonts/main.sh installed all 67 from the catalogue. `brew bundle cleanup`
+# lists what is installed but undeclared.
 cask "iterm2"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-plemol-jp"
@@ -336,9 +317,6 @@ vscode "yutent.scss-to-css"
 vscode "yzane.markdown-pdf"
 vscode "yzhang.markdown-all-in-one"
 vscode "zoellner.openapi-preview"
-go "github.com/d2lang/d2"
-go "github.com/scip-code/scip/cmd/scip"
-go "github.com/stacklok/toolhive/cmd/thv"
 cargo "cargo-xwin"
 cargo "rust_learn"
 cargo "sqlx-cli"
