@@ -50,8 +50,11 @@ zstyle ':z4h:ssh:*' send-extra-files '~/.nanorc' '~/.env.zsh'
 # `z4h install` only queues; the actual download happens inside `z4h init`
 # and is skipped entirely when the repo is already in $Z4H. Nothing here
 # touches the network on a warm cache.
+#
+# ohmyzsh/ohmyzsh was cloned here but never sourced (the `z4h source`/`z4h load`
+# lines below are commented out) — 13 MB of dead third-party shell code on every
+# machine. Removed. Add it back only alongside an actual `z4h source` line.
 _gh_repos=(
-    ohmyzsh/ohmyzsh
     mroth/evalcache
 )
 for r in $_gh_repos; do

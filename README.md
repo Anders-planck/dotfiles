@@ -26,9 +26,25 @@ chmod +x install.sh
 
 ### Zsh
 
-`zsh/` is a [zsh4humans](https://github.com/romkatv/zsh4humans) setup. `zsh/install`
-symlinks `.zshrc`, `.zshenv`, `.p10k.zsh` and `.zsh/` into `$HOME`; the numbered
+`zsh/` is a [zsh4humans](https://github.com/romkatv/zsh4humans) setup. The numbered
 files in `zsh/.zsh/` are sourced in order by `z4h source`.
+
+```sh
+zsh/install      # symlink .zshrc .zshenv .p10k.zsh .zsh/ into $HOME
+zsh/bootstrap    # install the CLI tools the config expects
+zsh/bootstrap --check    # verify only, install nothing
+update_zsh       # git pull this repo (installed by zsh/install)
+```
+
+`zsh/install` is safe to re-run. Anything real it would overwrite is moved to
+`~/.dotfiles-backup/<timestamp>/` first, and it resolves paths from its own
+location — so the repo can live anywhere. It also creates `~/.config/zsh` (0700)
+and seeds `secrets.zsh` (0600) from the template on first run.
+
+Every fragment in `.zsh/` is guarded by `type <tool>`, so a missing binary fails
+silently and the feature just disappears. `zsh/bootstrap` closes that gap: it
+installs what is missing via Homebrew, then verifies each command resolves and
+checks `secrets.zsh` permissions. Run it after `zsh/install` on a new machine.
 
 ### Secrets
 

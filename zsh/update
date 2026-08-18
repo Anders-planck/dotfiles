@@ -1,7 +1,18 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
+# Pull the latest dotfiles. Installed as ~/bin/update_zsh by ./install.
+set -eu
 
-cd "$HOME/dotzsh"
-git fetch --all --prune && git pull --rebase
-cd "$OLDPWD"
+# Derive the repo from this script's location. The old version did
+# `cd "$HOME/dotzsh"` with no error check, so once that path was wrong it ran
+# git against whatever directory you happened to be standing in.
+here=$(CDPATH= cd -- "$(dirname -- "$(readlink "$0" || echo "$0")")" && pwd -P)
+repo=$(CDPATH= cd -- "$here/.." && pwd -P)
 
-echo "Start a new terminal session and profit!"
+if [ ! -d "$repo/.git" ]; then
+	printf '%s is not a git checkout — cannot update.\n' "$repo" >&2
+	exit 1
+fi
+
+printf 'Updating %s\n' "$repo"
+git -C "$repo" fetch --all --prune
+git -C "$repo" pull --rebase
