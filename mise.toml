@@ -24,12 +24,17 @@ run = "./bin/bootstrap"
 description = "Audit fonts: referenced by configs, installed, unmanaged by brew"
 run = "./bin/fonts --check"
 
+[tasks.test]
+description = "Start a real interactive shell in a pty and check the prompt renders"
+run = "./bin/test-shell --cold --timeout 60"
+
 [tasks.lint]
 description = "shellcheck the sh/bash scripts and zsh -n the zsh files"
 run = """
 set -eu
 fail=0
 for f in install.sh bin/*; do
+  [ -f "$f" ] || continue
   head -1 "$f" | grep -qE '^#!.*(bash|sh)$' || continue
   shellcheck -S warning "$f" || fail=1
 done
@@ -96,6 +101,9 @@ echo "note: mise itself is upgraded by brew; 'mise self-update' is disabled."
 [tasks.doctor]
 description = "Health check: symlinks, tools, fonts, iTerm2, VS Code, secrets"
 run = """
+echo "=== shell starts? ==="
+./bin/test-shell --timeout 30
+echo
 echo "=== symlinks ==="
 ./install.sh --dry-run --link-only 2>&1 | tail -5
 echo

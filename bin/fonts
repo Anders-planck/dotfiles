@@ -4,6 +4,7 @@
 #   bin/fonts            install every font cask declared in the Brewfile
 #   bin/fonts --check    report only: what is referenced, installed, unmanaged
 #   bin/fonts --used     show which fonts the configs actually reference
+#   bin/fonts --backup DIR   archive the fonts brew cannot reinstall + write a manifest
 #
 # Font casks live in homebrew/cask with no tap. `brew tap homebrew/cask-fonts`
 # hard-errors: cask-fonts is in Homebrew's DEPRECATED_OFFICIAL_TAPS and the repo
@@ -18,6 +19,7 @@ mode=install
 case "${1:-}" in
 	--check) mode=check ;;
 	--used) mode=used ;;
+	--backup) mode=backup ;;
 	-h | --help)
 		sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
 		exit 0
@@ -50,6 +52,39 @@ if [ "$mode" = used ]; then
 		st=$([ "$n" -gt 0 ] && echo "ok ($n files)" || echo "MISSING")
 		printf '  %-14s %-12s %s\n' "$name" "$st" "$where"
 	done
+	exit 0
+fi
+
+if [ "$mode" = backup ]; then
+	# Archive the fonts Homebrew cannot reinstall. They are NOT committed: DankMono
+	# and MonoLisa are commercial, and redistributing them from a public repo would
+	# breach their licence. The repo tracks a manifest so a restore is verifiable;
+	# the files themselves go wherever you keep backups.
+	dest="${2:-}"
+	if [ -z "$dest" ]; then
+		printf 'usage: bin/fonts --backup <destination-dir>\n' >&2
+		printf '  e.g. bin/fonts --backup ~/Library/Mobile\\ Documents/com~apple~CloudDocs/fonts\n' >&2
+		exit 2
+	fi
+	mkdir -p "$dest"
+	manifest="$repo/fonts-unmanaged.txt"
+	: >"$manifest"
+	n=0
+	for name in DankMono MonoLisa RecMono; do
+		while IFS= read -r f; do
+			[ -n "$f" ] || continue
+			cp -p -- "$f" "$dest/" && n=$((n + 1))
+			printf '%s  %s\n' "$(shasum -a 256 "$f" | cut -d' ' -f1)" "$(basename "$f")" >>"$manifest"
+		done <<EOF
+$(find "$fontdir" -iname "*${name}*" -type f 2>/dev/null | sort)
+EOF
+	done
+	sort -k2 -o "$manifest" "$manifest"
+	printf 'copied %s font files -> %s\n' "$n" "$dest"
+	printf 'manifest (sha256, tracked in the repo) -> %s\n' "${manifest#"$repo"/}"
+	printf '\nTo restore on a new machine: copy those files into ~/Library/Fonts,\n'
+	printf 'then `bin/fonts --check` and verify against the manifest with:\n'
+	printf '  (cd ~/Library/Fonts && shasum -a 256 -c %s)\n' "${manifest#"$repo"/}"
 	exit 0
 fi
 

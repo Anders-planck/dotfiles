@@ -36,6 +36,7 @@ vscode/              → VS Code config, copied not linked (see below)
 | `link` / `dry` | symlinks only / show what would change |
 | `tools` | install missing CLI tools, then verify |
 | `fonts` | audit fonts: referenced, installed, unmanaged by brew |
+| `test` | start a real interactive shell in a pty, check the prompt renders |
 | `lint` | shellcheck the sh/bash scripts, `zsh -n` the zsh files |
 | `secrets` | scan the repo and its full history for credentials |
 | `export` | pull live VS Code / iTerm2 / Brewfile state back into the repo |
@@ -87,6 +88,16 @@ Two rules that cost seconds per shell when broken:
 
 Also: don't call `compinit` from `.zshrc` — z4h runs its own, deferred via `zle -F`.
 Adding an `fpath` entry is enough.
+
+### The prompt test
+
+`mise run test` (`bin/test-shell`) opens a pty, starts a real interactive login
+shell, and fails if no prompt is drawn. This exists because nothing else catches
+the hang above: `zsh -n` passes on a syntactically valid file, and `zsh -i -c` —
+the obvious way to "test the shell" — never renders a prompt, so precmd hooks
+never run. `--cold` clears the Powerlevel10k cache first, which is mandatory: the
+hang only fires on a stat-cache miss, so with a warm cache the test reports OK
+while the bug sits right there. Verified in both directions.
 
 ## Versions
 
@@ -153,3 +164,12 @@ Two fonts are installed by hand and Homebrew cannot reinstall them on a fresh
 machine: **DankMono** (commercial, no cask — and the first entry in the VS Code
 font stack) and **RecMono** (a cask exists, but the loose files in
 `~/Library/Fonts` shadow it and the cask refuses to install over them).
+
+Those are not committed — DankMono and MonoLisa are commercial and redistributing
+them from a public repo would breach their licence. Archive them yourself and keep
+the tracked checksum manifest honest:
+
+```sh
+bin/fonts --backup ~/somewhere/safe        # copies the files, writes fonts-unmanaged.txt
+(cd ~/Library/Fonts && shasum -a 256 -c ../../<repo>/fonts-unmanaged.txt)
+```

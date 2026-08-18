@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""Verify that an interactive login shell actually reaches a drawn prompt.
+
+Why this exists: the worst bug this config ever had was a shell function that
+shadowed /sbin/md5. Powerlevel10k calls `md5 -- <file>` while *rendering the
+prompt*, the wrapper ran a bare `cat`, and `cat` read from the terminal — so the
+shell hung forever showing only "Last login: ...".
+
+Nothing else in the test suite would have caught it:
+  * `zsh -n` passes — the file was syntactically valid.
+  * `zsh -i -c '<cmd>'` passes — with -c the shell never renders a prompt, so
+    precmd hooks never run. That is exactly how the bug stayed hidden.
+
+The only way to catch it is to open a pty, start a real interactive login shell,
+and wait for the prompt to appear.
+
+Usage:
+    bin/test-shell [--cold] [--timeout SECONDS] [--verbose]
+
+--cold clears the Powerlevel10k cache first. Use it in CI: the hang above only
+fires on a p10k stat-cache MISS, so a warm cache hides it completely.
+
+Exit status: 0 if a prompt was drawn and no shell errors appeared, 1 otherwise.
+"""
+
+import argparse
+import os
+import pty
+import re
+import select
+import signal
+import sys
+import time
+
+# Powerlevel10k draws a two-line frame; either glyph proves the prompt rendered.
+PROMPT_MARKERS = ("❯", "╰", "╭")  # ❯ ╰ ╭
+# A bare "$ " or "% " counts too, so the test still works without p10k.
+FALLBACK_PROMPT = re.compile(r"(^|\n)[^\n]*[$%#] $")
+
+ERROR_PATTERNS = re.compile(
+    r"command not found"
+    r"|ambiguous redirect"
+    r"|syntax error"
+    r"|no such file or directory"
+    r"|parse error"
+    r"|maximum nested function level",
+    re.I,
+)
+
+# Things z4h asks interactively. If one shows up the shell is waiting on a human,
+# which in CI is indistinguishable from a hang — report it as such rather than
+# timing out with a confusing message.
+QUESTION_PATTERNS = re.compile(r"\[y/N\]|\[yn\]|Choice \[|\(y\)  Yes", re.I)
+
+ANSI = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-9;?]*[a-zA-Z]|\x1b[78=>()][A-Z0-9]?")
+
+
+def strip_ansi(s):
+    return ANSI.sub("", s)
+
+
+def clear_p10k_cache():
+    """Force the cold path through Powerlevel10k's stat cache.
+
+    This is not optional decoration. The md5 hang only fires on a stat-cache
+    MISS — with a warm cache p10k never reaches the `md5 -- <file>` call, so the
+    test passes while the bug is sitting right there. Verified: with the bug
+    reintroduced and the cache warm this test reports OK; with the cache cleared
+    it correctly times out.
+    """
+    import shutil
+
+    base = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+    removed = []
+    for path in (
+        os.path.join(base, "zsh4humans", "v5", "cache", "powerlevel10k"),
+        os.path.join(base, "p10k-" + os.environ.get("USER", "")),
+    ):
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+            removed.append(path)
+    return removed
+
+
+def run(timeout, verbose):
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.environ["TERM"] = "xterm-256color"
+        # Keep z4h from offering to change the login shell inside a sandbox.
+        os.environ.setdefault("SHELL", "/bin/zsh")
+        os.execv("/bin/zsh", ["/bin/zsh", "-l", "-i"])
+
+    start = time.time()
+    buf = b""
+    prompt_at = None
+    deadline = start + timeout
+
+    while time.time() < deadline:
+        r, _, _ = select.select([fd], [], [], 0.2)
+        if not r:
+            continue
+        try:
+            chunk = os.read(fd, 65536)
+        except OSError:
+            break
+        if not chunk:
+            break
+        buf += chunk
+        text = strip_ansi(buf.decode("utf-8", "replace"))
+        if prompt_at is None:
+            if any(m in text for m in PROMPT_MARKERS) or FALLBACK_PROMPT.search(text):
+                prompt_at = time.time() - start
+                # Keep reading briefly: errors often land just after the prompt.
+                deadline = min(deadline, time.time() + 1.5)
+
+    try:
+        os.kill(pid, signal.SIGKILL)
+        os.waitpid(pid, 0)
+    except OSError:
+        pass
+
+    text = strip_ansi(buf.decode("utf-8", "replace"))
+    if verbose:
+        print("--- captured output ---")
+        print(text.strip()[:4000])
+        print("--- end ---")
+    return prompt_at, text, len(buf)
+
+
+def main():
+    ap = argparse.ArgumentParser(add_help=True)
+    ap.add_argument("--timeout", type=float, default=30.0)
+    ap.add_argument("--verbose", action="store_true")
+    ap.add_argument(
+        "--cold",
+        action="store_true",
+        help="clear the Powerlevel10k cache first, so the prompt takes its "
+        "cache-miss path — required to catch the md5 class of hang",
+    )
+    args = ap.parse_args()
+
+    if args.cold:
+        for p in clear_p10k_cache():
+            print("  cleared %s" % p.replace(os.path.expanduser("~"), "~"))
+
+    prompt_at, text, nbytes = run(args.timeout, args.verbose)
+    failures = []
+
+    question = QUESTION_PATTERNS.search(text)
+    if question:
+        failures.append(
+            "shell is waiting on an interactive question (%r) — it will hang "
+            "for anyone who is not sitting at the keyboard" % question.group(0)
+        )
+
+    if prompt_at is None:
+        failures.append(
+            "no prompt drawn within %.0fs (%d bytes of output). This is the "
+            "shape of the md5/p10k hang: the shell starts, prints nothing "
+            "useful, and waits forever." % (args.timeout, nbytes)
+        )
+    else:
+        print("  prompt drawn after %.0f ms" % (prompt_at * 1000))
+
+    for m in sorted(set(ERROR_PATTERNS.findall(text))):
+        failures.append("shell emitted an error containing %r" % m)
+
+    if failures:
+        print("FAIL")
+        for f in failures:
+            print("  - %s" % f)
+        if not args.verbose:
+            print("\n  re-run with --verbose to see the captured output")
+        return 1
+
+    print("OK  interactive login shell reaches a prompt cleanly")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

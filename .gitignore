@@ -14,3 +14,7 @@ secrets.zsh
 
 # VS Code MCP config: carries live Bearer tokens. Only the .example is tracked.
 vscode/mcp.json
+
+# byte-compiled helpers
+__pycache__/
+*.pyc

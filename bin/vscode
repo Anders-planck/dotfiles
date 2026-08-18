@@ -26,16 +26,79 @@ usage() {
 
 sanitise_mcp() {
 	[ -f "$user/mcp.json" ] || return 0
-	python3 - "$user/mcp.json" "$src/mcp.json.example" <<-'PY'
-		import json, sys
-		d = json.load(open(sys.argv[1]))
-		for s in d.get("servers", {}).values():
-		    h = s.get("headers", {})
-		    if "Authorization" in h:
-		        h["Authorization"] = "Bearer ${input:REPLACE_ME}"
-		open(sys.argv[2], "w").write(json.dumps(d, indent=2) + "\n")
+	# Redact by VALUE across the whole document, not by one known key.
+	# The previous version rewrote only servers[*].headers.Authorization, so a
+	# server authenticating through `env`, `args`, a token in the url, an
+	# X-Api-Key header or inputs[].default was published verbatim — and the
+	# committed file is the one that reaches a public repo.
+	#
+	# Written to a temp file and scanned there: on failure nothing lands in the
+	# repo, where a later `git add -A` would sweep it up.
+	local tmp
+	tmp=$(mktemp) || return 1
+	python3 - "$user/mcp.json" "$tmp" <<-'PY'
+		import json, re, sys
+
+		# Known credential prefixes, plus a generic high-entropy fallback.
+		PREFIXES = re.compile(
+		    r"(gh[pousr]_[A-Za-z0-9]{16,}"
+		    r"|github_pat_[A-Za-z0-9_]{20,}"
+		    r"|sk-[A-Za-z0-9_-]{16,}"
+		    r"|sk_(live|test)_[A-Za-z0-9]{16,}"
+		    r"|glpat-[A-Za-z0-9_-]{16,}"
+		    r"|xox[baprs]-[A-Za-z0-9-]{10,}"
+		    r"|AKIA[0-9A-Z]{16}"
+		    r"|AIza[0-9A-Za-z_-]{20,}"
+		    r"|ey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+		)
+		# Key names whose value is a credential whatever it looks like.
+		SECRET_KEY = re.compile(
+		    r"(authorization|api[-_]?key|secret|token|password|passwd|credential|bearer)",
+		    re.I,
+		)
+		PLACEHOLDER = "${input:REPLACE_ME}"
+		hits = []
+
+		def looks_secret(v):
+		    if not isinstance(v, str) or len(v) < 16:
+		        return False
+		    if PREFIXES.search(v):
+		        return True
+		    # Long opaque blob with no spaces: treat as a credential.
+		    body = v[7:] if v.lower().startswith("bearer ") else v
+		    return len(body) >= 24 and " " not in body and re.fullmatch(r"[A-Za-z0-9._~+/=-]+", body) is not None
+
+		def scrub(node, path="", key=None):
+		    if isinstance(node, dict):
+		        return {k: scrub(v, f"{path}.{k}", k) for k, v in node.items()}
+		    if isinstance(node, list):
+		        return [scrub(v, f"{path}[{i}]", key) for i, v in enumerate(node)]
+		    if isinstance(node, str):
+		        if (key and SECRET_KEY.search(key)) or looks_secret(node):
+		            hits.append(path)
+		            return PLACEHOLDER
+		        # A token embedded in a URL query string.
+		        if "://" in node and PREFIXES.search(node):
+		            hits.append(path)
+		            return PREFIXES.sub(PLACEHOLDER, node)
+		    return node
+
+		out = scrub(json.load(open(sys.argv[1])))
+		open(sys.argv[2], "w").write(json.dumps(out, indent=2) + "\n")
+		print(len(hits))
+		for h in hits:
+		    print("    redacted " + h.lstrip("."), file=sys.stderr)
 	PY
-	printf '  mcp.json.example  (Authorization headers replaced)\n'
+
+	# Independent check on the sanitised file, before it goes anywhere near the repo.
+	if grep -qEi 'gh[pousr]_[A-Za-z0-9]{16,}|github_pat_|sk-[A-Za-z0-9_-]{16,}|sk_(live|test)_|glpat-|xox[baprs]-|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|Bearer [A-Za-z0-9._-]{20,}' "$tmp"; then
+		rm -f "$tmp"
+		printf 'ERROR: a credential survived sanitising — mcp.json.example NOT written\n' >&2
+		return 1
+	fi
+
+	mv -- "$tmp" "$src/mcp.json.example"
+	printf '  mcp.json.example  (credentials redacted)\n'
 }
 
 case "${1:-}" in

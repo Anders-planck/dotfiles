@@ -75,3 +75,12 @@ jobs:
             echo "installer emitted shell errors"; exit 1
           fi
           echo "linked OK, no shell errors"
+
+      # The regression test that matters. `zsh -n` and `zsh -i -c` both pass on a
+      # config whose prompt hangs — with -c the shell never renders a prompt, so
+      # precmd hooks never run. This opens a pty, starts a real interactive login
+      # shell and waits for the prompt. --cold clears the p10k cache because the
+      # hang only fires on a stat-cache miss.
+      - name: interactive shell reaches a prompt
+        run: |
+          HOME=/tmp/fakehome ./bin/test-shell --cold --timeout 180 --verbose

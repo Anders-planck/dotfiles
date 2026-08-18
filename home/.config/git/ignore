@@ -27,3 +27,5 @@
 # Tooling caches that occasionally escape a project's own ignore file
 .direnv/
 .mise.local.toml
+
+**/.claude/settings.local.json
