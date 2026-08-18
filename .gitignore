@@ -2,3 +2,12 @@
 .idea/
 *.swp
 *.swo
+
+# Secrets — never commit. Only the .example template belongs in the repo.
+.config/zsh/secrets.zsh
+secrets.zsh
+*.local.zsh
+.env
+.env.*
+!.env.example
+.tokens/

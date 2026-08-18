@@ -18,6 +18,16 @@ function ppath() {
 function md() { [[ $# == 1 ]] && mkdir -p -- "$1" && cd -- "$1" }
 compdef _directories md
 
+# WARNING: never define an `md5` wrapper function here.
+# It shadows /sbin/md5, and Powerlevel10k calls `md5 -- <file>` (p10k.zsh:447)
+# inside a command substitution while building the prompt. A body such as
+#   function md5() { cat $1 | md5sum | cut -d' ' -f1 }
+# receives "--" as $1, so it runs a bare `cat`, which reads from the terminal
+# and hangs the shell *before the prompt is ever drawn* — the terminal shows
+# only "Last login: …" until you press Ctrl+C. It is intermittent because p10k
+# only reaches that code path on a stat-cache miss.
+# macOS ships both md5 and md5sum, so no wrapper is needed.
+
 # '...' => '../..' and so on...
 function rationalise-dot() {
     local MATCH

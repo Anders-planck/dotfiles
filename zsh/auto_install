@@ -1,8 +1,8 @@
 #! /usr/bin/env sh
 
-git clone https://github.com/fabiobedeschi/dotzsh.git "$HOME/dotzsh"
+git clone https://github.com/Anders-planck/dotfiles.git "$HOME/dotfiles"
 export OLDPWD=`pwd`
-cd "$HOME/dotzsh"
+cd "$HOME/dotfiles/zsh"
 chmod +x install update
 ./install
 cd "$OLDPWD"
