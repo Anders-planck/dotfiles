@@ -13,17 +13,38 @@ home/                → mirrored into $HOME, file by file, as symlinks
   .config/
     zsh/             → .zshrc, .zshenv, .p10k.zsh, conf.d/NN_*.zsh
     git/             → config, ignore   (XDG; NOT ~/.gitconfig)
-    nvim/ tmux/ ghostty/ lazygit/ mise/ powershell/ vscode/
+    nvim/ tmux/ ghostty/ lazygit/ mise/ powershell/
   .local/bin/        → user scripts on PATH
-  Library/…/Code/User/ → VS Code settings (macOS is not XDG)
 
+mise.toml            → task runner for this repo (`mise tasks`)
 Brewfile             → packages, casks, fonts, VS Code extensions
 install.sh           → the only installer
-bin/                 → repo tooling: bootstrap, update, iterm2, backup/restore
-iterm2/              → iTerm2 preferences (read from here, see below)
+bin/                 → bootstrap, update, fonts, iterm2, vscode, backup/restore
+iterm2/              → iTerm2 preferences, read from here (see below)
+vscode/              → VS Code config, copied not linked (see below)
 .github/workflows/   → gitleaks, shellcheck, sandboxed install test
 .chezmoiroot         → "home" — ready for chezmoi, not required
 ```
+
+## Tasks
+
+`mise run <task>` from the repo root; `mise tasks` lists them all.
+
+| Task | What it does |
+|---|---|
+| `install` | packages + symlinks + secrets + verification |
+| `link` / `dry` | symlinks only / show what would change |
+| `tools` | install missing CLI tools, then verify |
+| `fonts` | audit fonts: referenced, installed, unmanaged by brew |
+| `lint` | shellcheck the sh/bash scripts, `zsh -n` the zsh files |
+| `secrets` | scan the repo and its full history for credentials |
+| `export` | pull live VS Code / iTerm2 / Brewfile state back into the repo |
+| `brew:check` | report drift between the Brewfile and what is installed |
+| `update` | pull, then upgrade Homebrew packages and mise tools |
+| `doctor` | full health check |
+
+`brew:check` exits non-zero whenever anything is merely *outdated*, not only when
+missing — font casks in particular drift constantly. Treat it as a drift report.
 
 ## Setup
 
@@ -98,11 +119,37 @@ bin/iterm2 export    # copy live prefs back into the repo, as diffable XML
 bin/iterm2 status    # show what iTerm2 is currently configured to do
 ```
 
+## VS Code
+
+Not symlinked: VS Code rewrites `settings.json` itself whenever you change a
+setting in the UI, and would fight a link into the repo. Sync explicitly instead:
+
+```sh
+bin/vscode export       # live config -> repo (sanitises secrets)
+bin/vscode apply        # repo -> live config
+bin/vscode status       # what differs
+bin/vscode extensions   # reinstall everything in extensions.txt
+```
+
+`mcp.json` is **not** tracked: it carries live Bearer tokens for Sanity and Neon.
+Only `mcp.json.example` is committed, with the tokens replaced, and `export`
+refuses to finish if a real token survives sanitising.
+
+On macOS the User directory is `~/Library/Application Support/Code/User`, not XDG.
+
 ## Fonts
 
 Nerd Fonts come from the `Brewfile`. `brew tap homebrew/cask-fonts` no longer
 works — the tap is in Homebrew's deprecated list and the command hard-errors; font
 casks now live in `homebrew/cask` with no tap needed.
 
-Only the fonts the configs actually reference are declared. `brew bundle cleanup`
-lists anything installed but undeclared.
+```sh
+bin/fonts           # install every font cask in the Brewfile
+bin/fonts --used    # which fonts the configs reference, and whether they exist
+bin/fonts --check   # the above, plus fonts installed outside Homebrew
+```
+
+Two fonts are installed by hand and Homebrew cannot reinstall them on a fresh
+machine: **DankMono** (commercial, no cask — and the first entry in the VS Code
+font stack) and **RecMono** (a cask exists, but the loose files in
+`~/Library/Fonts` shadow it and the cask refuses to install over them).

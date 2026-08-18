@@ -135,7 +135,7 @@
   "supermaven.allowGitignore": true,
   "cursor.general.gitGraphIndexing": "enabled",
   "window.autoDetectColorScheme": false,
-  "workbench.iconTheme": "catppuccin-mocha",
+  "workbench.iconTheme": "vscode-icons",
   "workbench.view.alwaysShowHeaderActions": true,
   "workbench.view.showQuietly": {
     "workbench.panel.output": true

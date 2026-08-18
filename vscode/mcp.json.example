@@ -1,0 +1,26 @@
+{
+  "servers": {
+    "Sanity": {
+      "type": "http",
+      "url": "https://mcp.sanity.io",
+      "headers": {
+        "Authorization": "Bearer ${input:REPLACE_ME}"
+      }
+    },
+    "Neon": {
+      "type": "http",
+      "url": "https://mcp.neon.tech/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:REPLACE_ME}"
+      }
+    },
+    "phpstorm": {
+      "url": "http://127.0.0.1:64342/sse",
+      "type": "sse"
+    },
+    "webstorm": {
+      "url": "http://127.0.0.1:64343/sse",
+      "type": "sse"
+    }
+  }
+}

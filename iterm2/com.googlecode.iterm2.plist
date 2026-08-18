@@ -440,6 +440,8 @@
 	<false/>
 	<key>HotkeyMigratedFromSingleToMulti</key>
 	<true/>
+	<key>LoadPrefsFromCustomFolder</key>
+	<true/>
 	<key>NSAutoFillHeuristicControllerEnabled</key>
 	<false/>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
@@ -497,7 +499,7 @@
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>956 347 810 592 0 0 1800 1130 </string>
 	<key>NSWindow Frame iTerm Window 2</key>
-	<string>578 384 650 567 0 0 1800 1129 </string>
+	<string>930 205 970 746 0 0 1800 1130 </string>
 	<key>NSWindow Frame iTerm Window 3</key>
 	<string>221 537 810 592 0 0 1800 1130 </string>
 	<key>NSWindow Frame iTerm Window 4</key>
@@ -1808,6 +1810,8 @@
 	<integer>157</integer>
 	<key>NoSyncNeverAllowPaste</key>
 	<false/>
+	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
+	<integer>2</integer>
 	<key>NoSyncNextAnnoyanceTime</key>
 	<real>780871464.36293805</real>
 	<key>NoSyncOnboardingWindowHasBeenShown34</key>
@@ -2713,7 +2717,7 @@
 		<key>1</key>
 		<string>{956, 939}</string>
 		<key>2</key>
-		<string>{578, 951}</string>
+		<string>{930, 951}</string>
 		<key>3</key>
 		<string>{221, 1129}</string>
 	</dict>
@@ -2848,6 +2852,8 @@
 			<string>kNextWindowPointerAction</string>
 		</dict>
 	</dict>
+	<key>PrefsCustomFolder</key>
+	<string>/Users/anders/Desktop/works/dotfiles/iterm2</string>
 	<key>PreventEscapeSequenceFromClearingHistory</key>
 	<false/>
 	<key>Print In Black And White</key>

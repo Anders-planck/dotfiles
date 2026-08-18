@@ -1,0 +1,116 @@
+# Task runner for this repo. Run `mise tasks` to list, `mise run <task>` to run.
+#
+# This file declares no [tools]: the global runtime versions live in
+# home/.config/mise/config.toml, which is symlinked to ~/.config/mise/config.toml.
+# Declaring them here too would shadow the global set whenever you cd in here.
+
+[tasks.install]
+description = "Full install: packages, symlinks, secrets, verification"
+run = "./install.sh"
+
+[tasks.link]
+description = "Symlink home/ into $HOME, skipping brew bundle"
+run = "./install.sh --link-only"
+
+[tasks.dry]
+description = "Show what install.sh would change, touching nothing"
+run = "./install.sh --dry-run"
+
+[tasks.tools]
+description = "Install missing CLI tools, then verify them"
+run = "./bin/bootstrap"
+
+[tasks.fonts]
+description = "Audit fonts: referenced by configs, installed, unmanaged by brew"
+run = "./bin/fonts --check"
+
+[tasks.lint]
+description = "shellcheck the sh/bash scripts and zsh -n the zsh files"
+run = """
+set -eu
+fail=0
+for f in install.sh bin/*; do
+  head -1 "$f" | grep -qE '^#!.*(bash|sh)$' || continue
+  shellcheck -S warning "$f" || fail=1
+done
+for f in home/.zshenv home/.config/zsh/.zshrc home/.config/zsh/.zshenv home/.config/zsh/conf.d/*.zsh; do
+  zsh -n "$f" || { echo "FAIL $f"; fail=1; }
+done
+[ "$fail" -eq 0 ] && echo "lint OK"
+exit $fail
+"""
+
+[tasks.secrets]
+description = "Scan the repo and its full history for leaked credentials"
+run = """
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks detect --source . --redact --verbose
+else
+  echo "gitleaks not installed (brew install gitleaks) — falling back to grep"
+  git grep -nIE 'ghp_[A-Za-z0-9]{20,}|github_pat_|AKIA[0-9A-Z]{16}|Bearer [A-Za-z0-9._-]{30,}' \
+    $(git rev-list --all) -- . && { echo "MATCHES FOUND"; exit 1; } || echo "no matches"
+fi
+"""
+
+# ---- export: pull the machine's live state back into the repo ---------------
+
+[tasks."export:vscode"]
+description = "Copy live VS Code settings/keybindings/extensions into the repo"
+run = "./bin/vscode export"
+
+[tasks."export:iterm"]
+description = "Copy live iTerm2 preferences into the repo as diffable XML"
+run = "./bin/iterm2 export"
+
+[tasks."export:brew"]
+description = "Regenerate the Brewfile from what is currently installed"
+run = "brew bundle dump --file=Brewfile --force --describe"
+
+[tasks.export]
+description = "Run every export, then show what changed"
+depends = ["export:vscode", "export:iterm", "export:brew"]
+run = "git status --short"
+
+# ---- brew ------------------------------------------------------------------
+
+[tasks."brew:check"]
+description = "Report anything in the Brewfile that is not installed"
+run = "brew bundle check --file=Brewfile --verbose"
+
+[tasks."brew:cleanup"]
+description = "List installed packages NOT declared in the Brewfile (dry run)"
+run = "brew bundle cleanup --file=Brewfile"
+
+# ---- maintenance -----------------------------------------------------------
+
+[tasks.update]
+description = "Pull this repo, then upgrade Homebrew packages and mise tools"
+run = """
+set -eu
+git pull --rebase
+brew update && brew upgrade
+mise upgrade
+echo "note: mise itself is upgraded by brew; 'mise self-update' is disabled."
+"""
+
+[tasks.doctor]
+description = "Health check: symlinks, tools, fonts, iTerm2, VS Code, secrets"
+run = """
+echo "=== symlinks ==="
+./install.sh --dry-run --link-only 2>&1 | tail -5
+echo
+echo "=== tools ==="
+./bin/bootstrap --check 2>&1 | tail -12
+echo
+echo "=== fonts ==="
+./bin/fonts --used
+echo
+echo "=== iTerm2 ==="
+./bin/iterm2 status
+echo
+echo "=== VS Code ==="
+./bin/vscode status
+echo
+echo "=== runtimes ==="
+mise ls --current
+"""

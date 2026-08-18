@@ -5,7 +5,9 @@ set -eu
 # Derive the repo from this script's location. The old version did
 # `cd "$HOME/dotzsh"` with no error check, so once that path was wrong it ran
 # git against whatever directory you happened to be standing in.
+# shellcheck disable=SC1007  # `CDPATH= cd` is deliberate: neutralise CDPATH
 here=$(CDPATH= cd -- "$(dirname -- "$(readlink "$0" || echo "$0")")" && pwd -P)
+# shellcheck disable=SC1007
 repo=$(CDPATH= cd -- "$here/.." && pwd -P)
 
 if [ ! -d "$repo/.git" ]; then

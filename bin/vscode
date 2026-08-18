@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# Sync VS Code configuration between this repo and the live install.
+#
+#   bin/vscode export   copy the live config into the repo (sanitising secrets)
+#   bin/vscode apply    copy the repo config over the live one
+#   bin/vscode status   show what differs
+#
+# VS Code on macOS is not XDG: its User directory lives under
+# ~/Library/Application Support/Code/User. The files are not symlinked, because
+# VS Code rewrites settings.json itself whenever you change a setting in the UI
+# and would fight a symlink into the repo. Hence explicit export/apply.
+set -euo pipefail
+
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+src="$repo/vscode"
+user="$HOME/Library/Application Support/Code/User"
+
+# settings.json and keybindings.json round-trip. mcp.json does NOT: it carries
+# live Bearer tokens for Sanity and Neon, so only a sanitised .example is kept.
+FILES=(settings.json keybindings.json)
+
+usage() {
+	sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+	exit "${1:-0}"
+}
+
+sanitise_mcp() {
+	[ -f "$user/mcp.json" ] || return 0
+	python3 - "$user/mcp.json" "$src/mcp.json.example" <<-'PY'
+		import json, sys
+		d = json.load(open(sys.argv[1]))
+		for s in d.get("servers", {}).values():
+		    h = s.get("headers", {})
+		    if "Authorization" in h:
+		        h["Authorization"] = "Bearer ${input:REPLACE_ME}"
+		open(sys.argv[2], "w").write(json.dumps(d, indent=2) + "\n")
+	PY
+	printf '  mcp.json.example  (Authorization headers replaced)\n'
+}
+
+case "${1:-}" in
+	export)
+		mkdir -p "$src"
+		for f in "${FILES[@]}"; do
+			[ -f "$user/$f" ] || continue
+			cp "$user/$f" "$src/$f"
+			printf '  %s\n' "$f"
+		done
+		sanitise_mcp
+		if command -v code >/dev/null 2>&1; then
+			code --list-extensions >"$src/extensions.txt"
+		else
+			# Fall back to the extensions directory. A glob rather than `ls | grep`
+			# so dotfiles are skipped without tripping over odd filenames.
+			(
+				shopt -s nullglob
+				for d in "$HOME"/.vscode/extensions/*/; do
+					basename "$d" | sed -E 's/-[0-9]+\.[0-9]+\.[0-9]+.*$//'
+				done
+			) | sort -u >"$src/extensions.txt"
+		fi
+		printf '  extensions.txt    (%s extensions)\n' "$(wc -l <"$src/extensions.txt" | tr -d ' ')"
+
+		# Refuse to leave a real token in the repo, whatever the source looked like.
+		if grep -rqE 'Bearer [A-Za-z0-9._-]{20,}' "$src" 2>/dev/null; then
+			printf 'ERROR: a Bearer token survived sanitising — not safe to commit\n' >&2
+			exit 1
+		fi
+		;;
+	apply)
+		mkdir -p "$user"
+		for f in "${FILES[@]}"; do
+			[ -f "$src/$f" ] || continue
+			python3 -c "import json,sys;json.load(open(sys.argv[1]))" "$src/$f" 2>/dev/null ||
+				{ printf 'ERROR: %s is not valid JSON\n' "$f" >&2; exit 1; }
+			cp "$src/$f" "$user/$f"
+			printf '  %s -> %s\n' "$f" "${user/#$HOME/\~}"
+		done
+		printf 'Reload VS Code for changes to take effect.\n'
+		;;
+	extensions)
+		[ -f "$src/extensions.txt" ] || { printf 'no extensions.txt — run export first\n' >&2; exit 1; }
+		command -v code >/dev/null 2>&1 || { printf '`code` not on PATH\n' >&2; exit 1; }
+		while read -r e; do
+			[ -n "$e" ] && code --install-extension "$e" --force
+		done <"$src/extensions.txt"
+		;;
+	status)
+		for f in "${FILES[@]}"; do
+			if [ ! -f "$src/$f" ]; then printf '  %-18s missing in repo\n' "$f"
+			elif [ ! -f "$user/$f" ]; then printf '  %-18s missing on machine\n' "$f"
+			elif diff -q "$src/$f" "$user/$f" >/dev/null; then printf '  %-18s in sync\n' "$f"
+			else printf '  %-18s DIFFERS (%s lines)\n' "$f" "$(diff "$src/$f" "$user/$f" | grep -c '^[<>]')"
+			fi
+		done
+		printf '  %-18s %s in repo\n' "extensions.txt" "$(wc -l <"$src/extensions.txt" 2>/dev/null | tr -d ' ' || echo 0)"
+		printf '  %-18s %s\n' "mcp.json" "live file is gitignored (contains tokens)"
+		;;
+	-h | --help | '') usage 0 ;;
+	*)
+		printf 'unknown command: %s\n\n' "$1" >&2
+		usage 2
+		;;
+esac

@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# bash, not sh: this script uses `read -p`, which POSIX sh does not define.
 
 # 📦 Cartella di backup da cui ripristinare
 BACKUP_DIR="${BACKUP_DIR:-$HOME/Desktop/backup-configs}"
@@ -21,7 +22,7 @@ if [ "$confirm" != "y" ]; then
   exit 0
 fi
 
-> "$RESTORE_LOG" # Pulisci il file di log
+: > "$RESTORE_LOG" # truncate the log (: is a no-op command, keeps shellcheck happy)
 
 # 🚀 Avvio ripristino
 echo ""

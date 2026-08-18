@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# bash, not sh: this script uses `read -p`, which POSIX sh does not define.
 
 RESTORE_LOG="$HOME/restore-log.txt"
 

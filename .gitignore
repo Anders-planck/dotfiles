@@ -11,3 +11,6 @@ secrets.zsh
 .env.*
 !.env.example
 .tokens/
+
+# VS Code MCP config: carries live Bearer tokens. Only the .example is tracked.
+vscode/mcp.json

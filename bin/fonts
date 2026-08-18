@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# Install and audit the fonts this setup actually uses.
+#
+#   bin/fonts            install every font cask declared in the Brewfile
+#   bin/fonts --check    report only: what is referenced, installed, unmanaged
+#   bin/fonts --used     show which fonts the configs actually reference
+#
+# Font casks live in homebrew/cask with no tap. `brew tap homebrew/cask-fonts`
+# hard-errors: cask-fonts is in Homebrew's DEPRECATED_OFFICIAL_TAPS and the repo
+# 404s. The old fonts/ directory installed all 67 casks from the Nerd Fonts
+# catalogue via a hand-rolled jq loop; the Brewfile replaces it.
+set -euo pipefail
+
+repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+fontdir="$HOME/Library/Fonts"
+
+mode=install
+case "${1:-}" in
+	--check) mode=check ;;
+	--used) mode=used ;;
+	-h | --help)
+		sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+		exit 0
+		;;
+	'') ;;
+	*)
+		printf 'unknown option: %s\n' "$1" >&2
+		exit 2
+		;;
+esac
+
+# Fonts named in the configs, and where. Keep this in sync when a config changes.
+referenced() {
+	printf '%s\n' \
+		"DankMono|vscode editor.fontFamily (first), iterm2 profile" \
+		"UbuntuSansMono|vscode editor.fontFamily" \
+		"JetBrainsMono|vscode editor.fontFamily" \
+		"FiraCode|vscode editor.fontFamily" \
+		"CaskaydiaCove|vscode editor.fontFamily" \
+		"RecMonoCasual|vscode editor.fontFamily" \
+		"CommitMono|vscode editor.fontFamily" \
+		"MonoLisa|vscode editor.fontFamily (paid, no cask)" \
+		"PlemolJP|ghostty font-family"
+}
+
+if [ "$mode" = used ]; then
+	printf 'Fonts referenced by the configs:\n\n'
+	referenced | while IFS='|' read -r name where; do
+		n=$(find "$fontdir" -iname "*${name}*" 2>/dev/null | wc -l | tr -d ' ')
+		st=$([ "$n" -gt 0 ] && echo "ok ($n files)" || echo "MISSING")
+		printf '  %-14s %-12s %s\n' "$name" "$st" "$where"
+	done
+	exit 0
+fi
+
+if [ "$mode" = install ]; then
+	command -v brew >/dev/null 2>&1 || {
+		printf 'Homebrew required. See https://brew.sh\n' >&2
+		exit 1
+	}
+	printf 'Installing font casks declared in the Brewfile...\n'
+	# Only the cask lines starting with font-, so this does not pull in the rest.
+	grep '^cask "font-' "$repo/Brewfile" | sed 's/^cask "//;s/".*//' |
+		while read -r c; do
+			if brew list --cask "$c" >/dev/null 2>&1; then
+				printf '  present  %s\n' "$c"
+			else
+				printf '  install  %s\n' "$c"
+				brew install --cask "$c" || printf '  FAILED   %s\n' "$c"
+			fi
+		done
+	printf '\n'
+fi
+
+printf -- '--- referenced by configs ---\n'
+# NOTE: this loop runs in a subshell, so it cannot set a variable the parent
+# reads. Reporting is the point here; the exit status is not used as a gate.
+referenced | while IFS='|' read -r name where; do
+	n=$(find "$fontdir" -iname "*${name}*" 2>/dev/null | wc -l | tr -d ' ')
+	if [ "$n" -gt 0 ]; then
+		printf '  ok       %-14s %s files\n' "$name" "$n"
+	else
+		printf '  MISSING  %-14s (%s)\n' "$name" "$where"
+	fi
+done
+
+printf -- '\n--- installed but NOT managed by Homebrew ---\n'
+# These were installed by hand or by the old downloader script. They will not be
+# reinstalled on a fresh machine, and a matching cask will refuse to install
+# over them ("It seems there is already a Font at ...").
+unmanaged=0
+for name in DankMono RecMono MonoLisa; do
+	n=$(find "$fontdir" -iname "*${name}*" 2>/dev/null | wc -l | tr -d ' ')
+	[ "$n" -eq 0 ] && continue
+	if brew list --cask 2>/dev/null | grep -qi "font-.*${name}"; then continue; fi
+	printf '  %-14s %s files — no cask installed\n' "$name" "$n"
+	unmanaged=1
+done
+[ "$unmanaged" -eq 0 ] && printf '  none\n'
+
+cat <<'NOTE'
+
+Notes
+  DankMono  commercial font, no Homebrew cask. Keep a copy of the .otf files
+            somewhere safe; a fresh machine cannot reinstall it from here.
+  RecMono   available as font-recursive-mono-nerd-font, but the loose files in
+            ~/Library/Fonts shadow it and the cask refuses to install over them.
+            To let brew manage it: remove the loose RecMono* files first.
+  MonoLisa  commercial, and only a fallback in the VS Code font stack.
+NOTE

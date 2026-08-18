@@ -119,10 +119,11 @@ done < <({
 	# Only look where we actually install: the top-level entries of home/, plus
 	# $HOME itself at depth 1. Scanning all of $HOME takes minutes.
 	find "$HOME" -maxdepth 1 -type l 2>/dev/null
-	for top in $(find "$src" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;); do
-		d="$HOME/$top"
-		[ -d "$d" ] && find "$d" -type l 2>/dev/null
-	done
+	find "$src" -mindepth 1 -maxdepth 1 -type d -print0 |
+		while IFS= read -r -d '' top; do
+			d="$HOME/$(basename "$top")"
+			[ -d "$d" ] && find "$d" -type l 2>/dev/null
+		done
 } | while IFS= read -r l; do [ -e "$l" ] || printf '%s\n' "$l"; done | sort -u)
 [ "$pruned" -gt 0 ] && say "$pruned dangling link(s) pruned"
 
