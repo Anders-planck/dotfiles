@@ -1,0 +1,22 @@
+# EditorConfig — https://editorconfig.org
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Shell scripts here use tabs, matching the existing files and shfmt defaults.
+[*.{sh,zsh,bash}]
+indent_style = tab
+
+[bin/*]
+indent_style = tab
+
+[*.{json,yml,yaml,toml,lua}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

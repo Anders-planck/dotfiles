@@ -1,0 +1,58 @@
+# Template for ~/.ssh/config. NOT deployed by install.sh — copy it by hand.
+#
+# The real config is deliberately NOT tracked. It names six hosts by IP, with
+# usernames, identity files and a ProxyJump bastion: in a public repo that is a
+# map of your infrastructure and the account to try on each box. Nothing here is
+# a credential, which is exactly why it is easy to leak by accident.
+#
+# Split it instead:
+#   ~/.ssh/config          this skeleton — global defaults, safe to share
+#   ~/.ssh/config.d/*.conf per-host blocks — machine-specific, never committed
+#
+# Setup on a new machine:
+#   mkdir -p ~/.ssh/config.d && chmod 700 ~/.ssh ~/.ssh/config.d
+#   cp ssh/config.example ~/.ssh/config && chmod 600 ~/.ssh/config
+#   # then recreate the host blocks under ~/.ssh/config.d/
+
+# OrbStack's 'orb' host. Must stay at the top: ssh_config takes the FIRST value
+# it sees for any keyword, so an Include placed later loses to earlier blocks.
+Include ~/.orbstack/ssh/config
+
+# Per-host blocks. Keep them out of the repo.
+Include ~/.ssh/config.d/*.conf
+
+Host *
+  # Load keys into the agent on first use and unlock them from the Keychain,
+  # so a passphrase is typed once per login rather than once per connection.
+  AddKeysToAgent yes
+  UseKeychain yes
+
+  # Drop dead sessions instead of leaving them wedged behind a NAT timeout.
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+
+  # Reuse one TCP connection for subsequent sessions to the same host.
+  ControlMaster auto
+  ControlPath ~/.ssh/control-%r@%h:%p
+  ControlPersist 10m
+
+  # Forward the agent only where you have explicitly opted in, never globally:
+  # any root on the remote host can use your forwarded agent while you are
+  # connected. Set `ForwardAgent yes` inside a specific Host block instead.
+  ForwardAgent no
+
+# Template for a per-host file in ~/.ssh/config.d/, e.g. work.conf:
+#
+#   Host myserver
+#     Hostname 10.0.0.1
+#     Port 22
+#     User deploy
+#     IdentityFile ~/.ssh/id_ed25519_work
+#     IdentitiesOnly yes
+#
+# A note on the current config: four of the six hosts set
+# `StrictHostKeyChecking no`. That disables host-key verification entirely — ssh
+# will connect to whatever answers on that address without complaint, which is
+# precisely the check that would catch a man-in-the-middle. If it was set to stop
+# the prompt on first connect, the right setting is `StrictHostKeyChecking accept-new`:
+# it trusts a host the first time and still refuses if the key later changes.

@@ -43,37 +43,35 @@ function ccs() {
 		session_name="${repo_name:-$(basename "$project_dir")}"
 	fi
 
-	# Build claude command
-	local cmd="cd '${project_dir}'"
-	cmd+=" && claude"
+	# Build the claude argv, then quote it exactly once.
+	#
+	# This used to be `local cmd="cd '${project_dir}'"` with hand-written single
+	# quotes, nested inside another single-quoted string handed to tmux — which
+	# runs it through /bin/sh. Any apostrophe or space in the path closed the
+	# quote early, so `~/Dev/Anders' Projects` broke the function outright and a
+	# directory named `a'$(...)'b` executed its own contents. Same flaw in the
+	# unquoted `--model $model` and `${extra_args[*]}`.
+	#
+	# ${(q@)...} is zsh's own quoting, applied per array element: it escapes for
+	# exactly one round of shell parsing, which is what tmux gives us. The @ is
+	# load-bearing — plain ${(q)argv} inside a join flattens the array first and
+	# escapes the separators too, producing one unrunnable command name.
+	local -a argv
+	argv=(claude)
+	[[ "$mode" == "yellow" ]] && argv+=(--dangerously-skip-permissions)
+	[[ "$resume" == true ]] && argv+=(--resume)
+	[[ -n "$model" ]] && argv+=(--model "$model")
+	[[ "$print_mode" == true ]] && argv+=(--print)
+	(( ${#extra_args[@]} )) && argv+=("${extra_args[@]}")
 
-	if [[ "$mode" == "yellow" ]]; then
-		cmd+=" --dangerously-skip-permissions"
-	fi
+	local cmd="${(j: :)${(q@)argv}}; zsh"
 
-	if [[ "$resume" == true ]]; then
-		cmd+=" --resume"
-	fi
-
-	if [[ -n "$model" ]]; then
-		cmd+=" --model $model"
-	fi
-
-	if [[ "$print_mode" == true ]]; then
-		cmd+=" --print"
-	fi
-
-	if [[ ${#extra_args[@]} -gt 0 ]]; then
-		cmd+=" ${extra_args[*]}"
-	fi
-
-	# Launch in tmux
+	# Launch in tmux. -c sets the working directory, so the path never has to
+	# survive a trip through the shell at all.
 	if [[ -n "$TMUX" ]]; then
-		# Already in tmux — create a new window
-		tmux new-window -n "cc:${session_name}" "zsh -ic '${cmd}; zsh'"
+		tmux new-window -c "$project_dir" -n "cc:${session_name}" zsh -ic "$cmd"
 	else
-		# Not in tmux — create/attach a session
-		tmux new-session -A -s "cc-${session_name}" "zsh -ic '${cmd}; zsh'"
+		tmux new-session -A -s "cc-${session_name}" -c "$project_dir" zsh -ic "$cmd"
 	fi
 }
 
@@ -103,20 +101,23 @@ function ccteam() {
 		session_name="${repo_name:-$(basename "$project_dir")}-team"
 	fi
 
-	local base_cmd="cd '${project_dir}' && claude --dangerously-skip-permissions"
+	# Same quoting rule as ccs: -c gives tmux the directory, so it never travels
+	# through a shell. send-keys types into a live shell, so what it types must be
+	# valid input — ${(q)} makes it so even for a path with spaces or quotes.
+	local base_cmd="claude --dangerously-skip-permissions"
 
 	if [[ -n "$TMUX" ]]; then
 		# Create the lead window
-		tmux new-window -n "cc:${session_name}"
+		tmux new-window -c "$project_dir" -n "cc:${session_name}"
 		tmux send-keys "${base_cmd}" Enter
 
 		# Split panes for teammates
 		local i
 		for i in $(seq 1 $workers); do
 			if (( i % 2 == 1 )); then
-				tmux split-window -h
+				tmux split-window -c "$project_dir" -h
 			else
-				tmux split-window -v
+				tmux split-window -c "$project_dir" -v
 			fi
 			tmux send-keys "${base_cmd}" Enter
 		done
@@ -127,11 +128,11 @@ function ccteam() {
 		tmux select-pane -t 0
 	else
 		# Create a new tmux session with tiled panes
-		tmux new-session -d -s "cc-${session_name}"
+		tmux new-session -d -s "cc-${session_name}" -c "$project_dir"
 		tmux send-keys -t "cc-${session_name}" "${base_cmd}" Enter
 
 		for i in $(seq 1 $workers); do
-			tmux split-window -t "cc-${session_name}"
+			tmux split-window -c "$project_dir" -t "cc-${session_name}"
 			tmux send-keys "${base_cmd}" Enter
 			tmux select-layout -t "cc-${session_name}" tiled
 		done

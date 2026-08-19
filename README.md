@@ -18,9 +18,12 @@ home/                → mirrored into $HOME, file by file, as symlinks
 
 mise.toml            → task runner for this repo (`mise tasks`)
 Brewfile             → packages, casks, fonts, VS Code extensions
-install.sh           → the only installer
+install.sh           → the only installer (Windows: none — install.ps1 was
+                       removed, it referenced a fish config that no longer
+                       exists and used curl flags PowerShell rejects)
 bin/                 → bootstrap, update, fonts, iterm2, vscode, backup/restore
 iterm2/              → iTerm2 preferences, read from here (see below)
+ssh/                 → config.example only; the real config is NOT tracked
 vscode/              → VS Code config, copied not linked (see below)
 .github/workflows/   → gitleaks, shellcheck, sandboxed install test
 .chezmoiroot         → "home" — ready for chezmoi, not required
@@ -176,6 +179,21 @@ Only `mcp.json.example` is committed, with the tokens replaced, and `export`
 refuses to finish if a real token survives sanitising.
 
 On macOS the User directory is `~/Library/Application Support/Code/User`, not XDG.
+
+## SSH
+
+`~/.ssh/config` is deliberately **not** tracked. It names six hosts by IP, with
+usernames, identity files and a ProxyJump bastion — no credentials, which is
+exactly what makes it easy to leak by accident, and in a public repo it is a map
+of your infrastructure and the account to try on each box.
+
+`ssh/config.example` holds the reusable part: global defaults, connection reuse,
+and an `Include ~/.ssh/config.d/*.conf` so per-host blocks stay local.
+
+Worth fixing while you are in there: four of the six hosts set
+`StrictHostKeyChecking no`, which disables host-key verification outright — the
+one check that would catch a man-in-the-middle. `accept-new` trusts a host on
+first contact and still refuses if its key later changes.
 
 ## Fonts
 
