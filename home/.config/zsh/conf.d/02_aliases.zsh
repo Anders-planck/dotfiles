@@ -121,7 +121,6 @@ alias which-command=whence
 
 alias y=yay
 
-alias z='_z 2>&1'
 alias zshrc='ed $HOME.zshrc'
 
 if type xdg-open &> /dev/null; then
