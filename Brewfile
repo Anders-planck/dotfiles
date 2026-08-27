@@ -1,6 +1,5 @@
 tap "anomalyco/tap"
 tap "encoredev/tap"
-tap "homebrew/command-not-found"
 tap "jetbrains/utils"
 tap "mongodb/brew"
 tap "stripe/stripe-cli"
