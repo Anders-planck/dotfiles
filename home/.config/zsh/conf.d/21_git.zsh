@@ -354,3 +354,74 @@ function gdh() {
     git diff HEAD
   fi
 }
+
+# ---- Sync con il plugin git di oh-my-zsh -----------------------------------
+# Questo file è un port del plugin git di oh-my-zsh, che era rimasto indietro
+# rispetto a upstream: mancavano 39 fra alias e funzioni, fra cui l'intera
+# famiglia `git worktree` e i pull con rebase. Copiati testualmente da
+# ohmyzsh/plugins/git/git.plugin.zsh per restare confrontabili a vista.
+
+alias gbg='LANG=C git branch -vv | grep ": gone\]"'
+alias gbgD='LANG=C git branch --no-color -vv | grep ": gone\]" | cut -c 3- | awk '"'"'{print $1}'"'"' | xargs git branch -D'
+alias gbgd='LANG=C git branch --no-color -vv | grep ": gone\]" | cut -c 3- | awk '"'"'{print $1}'"'"' | xargs git branch -d'
+alias gbm='git branch --move'
+alias gbsn='git bisect new'
+alias gbso='git bisect old'
+alias gcB='git checkout -B'
+alias gcann!='git commit --verbose --all --date=now --no-edit --amend'
+alias gcfu='git commit --fixup'
+alias gclf='git clone --recursive --shallow-submodules --filter=blob:none --also-filter-submodules'
+alias gcn='git commit --verbose --no-edit'
+alias gga='git gui citool --amend'
+alias gluc='git pull upstream $(git_current_branch)'
+alias gmc='git merge --continue'
+alias gmff="git merge --ff-only"
+alias gms="git merge --squash"
+alias gpod='git push origin --delete'
+alias gpra='git pull --rebase --autostash'
+alias gprav='git pull --rebase --autostash -v'
+alias gprom='git pull --rebase origin $(git_main_branch)'
+alias gpromi='git pull --rebase=interactive origin $(git_main_branch)'
+alias gprum='git pull --rebase upstream $(git_main_branch)'
+alias gprumi='git pull --rebase=interactive upstream $(git_main_branch)'
+alias gprv='git pull --rebase -v'
+alias grbum='git rebase upstream/$(git_main_branch)'
+alias greva='git revert --abort'
+alias grevc='git revert --continue'
+alias grf='git reflog'
+alias grhk='git reset --keep'
+alias grhs='git reset --soft'
+alias gta='git tag --annotate'
+alias gwipe='git reset --hard && git clean --force -df'
+alias gwt='git worktree'
+alias gwta='git worktree add'
+alias gwtls='git worktree list'
+alias gwtmv='git worktree move'
+alias gwtrm='git worktree remove'
+
+function gbds() {
+  local default_branch=$(git_main_branch)
+  (( ! $? )) || default_branch=$(git_develop_branch)
+
+  git for-each-ref refs/heads/ "--format=%(refname:short)" | \
+    while read branch; do
+      local merge_base=$(git merge-base $default_branch $branch)
+      if [[ $(git cherry $default_branch $(git commit-tree $(git rev-parse $branch\^{tree}) -p $merge_base -m _)) = -* ]]; then
+        git branch -D $branch
+      fi
+    done
+}
+function gunwipall() {
+  local _commit=$(git log --grep='--wip--' --invert-grep --max-count=1 --format=format:%H)
+
+  # Check if a commit without "--wip--" was found and it's not the same as HEAD
+  if [[ "$_commit" != "$(git rev-parse HEAD)" ]]; then
+    git reset $_commit || return 1
+  fi
+}
+
+# `gll` non esiste in oh-my-zsh, Prezto o zsh-git-aliases, e non è mai stato
+# definito in questo repo: è una scelta nostra, non un ripristino. Mappato sul
+# comportamento di `ggl` (pull del branch corrente da origin), che è la lettura
+# più naturale di "gl lungo". Cambia questa riga se intendevi altro.
+alias gll='ggl'
