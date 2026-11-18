@@ -47,6 +47,11 @@ warn() { printf '\033[1;33mwarn\033[0m %s\n' "$1"; }
 # ---- 1. packages ------------------------------------------------------------
 if [ "$link_only" -eq 0 ] && [ -f "$repo/Brewfile" ]; then
 	if command -v brew >/dev/null 2>&1; then
+		# rustup is keg-only. Unless its proxies are on PATH, brew bundle finds no
+		# `cargo` for the cargo entries and installs the `rust` formula instead,
+		# which then shadows rustup (and its cross-compile targets) for good.
+		PATH="$(brew --prefix)/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
+		export PATH
 		say "brew bundle"
 		if [ "$dry" -eq 1 ]; then
 			brew bundle check --file="$repo/Brewfile" || true

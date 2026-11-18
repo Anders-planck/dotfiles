@@ -7,6 +7,7 @@
   "git.autofetch": true,
   "editor.fontFamily": "'DankMono Nerd Font','UbuntuSansMono Nerd Font','JetBrainsMono Nerd font','Fira Code','Cascadia Code','FiraCode Nerd font','MonoLisa Nerd font Mono', Menlo, Monaco, 'Courier New', monospace, 'Dank Mono',Menlo,'RecMonoCasual Nerd Font','CaskaydiaCove Nerd Font Mono',CommitMono,'JetBrainsMono Nerd font'",
   "editor.fontSize": 15,
+  "terminal.integrated.fontFamily": "'Agave Nerd Font Mono'",
   "editor.fontLigatures": true,
   "editor.lineHeight": 2,
   "editor.tokenColorCustomizations": {

@@ -34,15 +34,15 @@ esac
 # Fonts named in the configs, and where. Keep this in sync when a config changes.
 referenced() {
 	printf '%s\n' \
-		"DankMono|vscode editor.fontFamily (first), iterm2 profile" \
+		"AgaveNerdFontMono|ghostty font-family, iterm2 profile, vscode terminal" \
+		"DankMono|vscode editor.fontFamily (first)" \
 		"UbuntuSansMono|vscode editor.fontFamily" \
 		"JetBrainsMono|vscode editor.fontFamily" \
 		"FiraCode|vscode editor.fontFamily" \
 		"CaskaydiaCove|vscode editor.fontFamily" \
 		"RecMonoCasual|vscode editor.fontFamily" \
 		"CommitMono|vscode editor.fontFamily" \
-		"MonoLisa|vscode editor.fontFamily (paid, no cask)" \
-		"PlemolJP|ghostty font-family"
+		"MonoLisa|vscode editor.fontFamily (paid, no cask)"
 }
 
 if [ "$mode" = used ]; then
@@ -127,7 +127,10 @@ unmanaged=0
 for name in DankMono RecMono MonoLisa; do
 	n=$(find "$fontdir" -iname "*${name}*" 2>/dev/null | wc -l | tr -d ' ')
 	[ "$n" -eq 0 ] && continue
-	if brew list --cask 2>/dev/null | grep -qi "font-.*${name}"; then continue; fi
+	# RecMono's cask is named after the family it is cut from, not the font.
+	pat=$name
+	[ "$name" = RecMono ] && pat=recursive-mono
+	if brew list --cask 2>/dev/null | grep -qi "font-.*${pat}"; then continue; fi
 	printf '  %-14s %s files — no cask installed\n' "$name" "$n"
 	unmanaged=1
 done
@@ -138,8 +141,8 @@ cat <<'NOTE'
 Notes
   DankMono  commercial font, no Homebrew cask. Keep a copy of the .otf files
             somewhere safe; a fresh machine cannot reinstall it from here.
-  RecMono   available as font-recursive-mono-nerd-font, but the loose files in
-            ~/Library/Fonts shadow it and the cask refuses to install over them.
-            To let brew manage it: remove the loose RecMono* files first.
+  RecMono   managed by font-recursive-mono-nerd-font. If loose RecMono* files
+            are already in ~/Library/Fonts, the cask refuses to install over
+            them: remove those first.
   MonoLisa  commercial, and only a fallback in the VS Code font stack.
 NOTE
