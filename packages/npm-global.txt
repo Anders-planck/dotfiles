@@ -1,5 +1,5 @@
 @nestjs/cli
-@nyariv/sandboxjs
+# @nyariv/sandboxjs  (git dependency of @probelabs/probe, not a global — listing it breaks npm i -g)
 @playwright/cli
 @probelabs/probe
 @tobilu/qmd

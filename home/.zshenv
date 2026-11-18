@@ -15,6 +15,11 @@ export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
 export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 
+# Bun falls back to $XDG_CACHE_HOME/.bun once XDG_CACHE_HOME is set (above), so
+# `bun add -g` binaries would land in ~/.cache/.bun/bin — not on PATH. Pin it to
+# ~/.bun, which is what .zshrc and bin/globals expect.
+export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+
 # Hand off to the real zshenv. zsh will not do this for us: it reads
 # $ZDOTDIR/.zshenv only when ZDOTDIR was already set before this file ran.
 [[ -r "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"

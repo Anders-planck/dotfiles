@@ -262,7 +262,9 @@ vscode "iganbold.superdesign"
 vscode "illixion.vscode-vibrancy-continued"
 vscode "infeng.vscode-react-typescript"
 vscode "janisdd.vscode-edit-csv"
-vscode "jimasp.behave-vsc"
+# jimasp.behave-vsc has no release version, only pre-releases, and `brew bundle`
+# cannot pass --pre-release — the entry made the whole bundle fail. Install it by
+# hand: code --install-extension jimasp.behave-vsc --pre-release
 vscode "jock.svg"
 vscode "jripouteau.japa-vscode"
 vscode "kevinrose.vsc-python-indent"

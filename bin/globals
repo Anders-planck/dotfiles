@@ -16,6 +16,9 @@ set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 pkg="$repo/packages"
 
+# Same default as ~/.zshenv; bun would otherwise pick $XDG_CACHE_HOME/.bun.
+export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+
 mode=install
 case "${1:-}" in
 	--check) mode=check ;;
@@ -50,12 +53,12 @@ for name, info in sorted(d.items()):
 ' >"$pkg/npm-global.txt"
 		printf 'npm  -> %s\n' "$pkg/npm-global.txt"
 	fi
-	if [ -f "$HOME/.bun/install/global/package.json" ]; then
+	if [ -f "$BUN_INSTALL/install/global/package.json" ]; then
 		python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
 print("\n".join(sorted(d.get("dependencies", {}))))
-' "$HOME/.bun/install/global/package.json" >"$pkg/bun-global.txt"
+' "$BUN_INSTALL/install/global/package.json" >"$pkg/bun-global.txt"
 		printf 'bun  -> %s\n' "$pkg/bun-global.txt"
 	fi
 	if command -v rustup >/dev/null 2>&1; then
@@ -114,7 +117,7 @@ bun_missing=""
 if command -v bun >/dev/null 2>&1; then
 	while IFS= read -r p; do
 		[ -n "$p" ] || continue
-		[ -d "$HOME/.bun/install/global/node_modules/$p" ] || bun_missing="$bun_missing$p"$'\n'
+		[ -d "$BUN_INSTALL/install/global/node_modules/$p" ] || bun_missing="$bun_missing$p"$'\n'
 	done <<EOF
 $(list bun-global.txt)
 EOF
